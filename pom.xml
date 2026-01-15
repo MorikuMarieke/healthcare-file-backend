@@ -80,12 +80,12 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- Lombok (optional but convenient) -->
-		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
-			<optional>true</optional>
-		</dependency>
+<!--		&lt;!&ndash; Lombok (optional but convenient) &ndash;&gt;-->
+<!--		<dependency>-->
+<!--			<groupId>org.projectlombok</groupId>-->
+<!--			<artifactId>lombok</artifactId>-->
+<!--			<optional>true</optional>-->
+<!--		</dependency>-->
 
 		<!-- Testing -->
 		<dependency>
