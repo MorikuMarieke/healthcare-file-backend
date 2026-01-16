@@ -22,4 +22,16 @@ public class AuthController {
     public UserRegistrationResponseDto register(@Valid @RequestBody UserRegistrationRequestDto request) {
         return authService.registerClient(request);
     }
+
+    @PostMapping("/register/employee")
+    @ResponseStatus(HttpStatus.CREATED)
+    public UserRegistrationResponseDto registerEmployee(@Valid @RequestBody UserRegistrationRequestDto request) {
+        return authService.registerEmployee(request);
+    }
+
+    @PostMapping("/register/admin")
+    @ResponseStatus(HttpStatus.CREATED)
+    public UserRegistrationResponseDto registerAdmin(@Valid @RequestBody UserRegistrationRequestDto request) {
+        return authService.registerAdmin(request);
+    }
 }

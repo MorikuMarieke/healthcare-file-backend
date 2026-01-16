@@ -27,3 +27,8 @@ public class SecurityConfig {
     }
 
 }
+
+
+///auth/register → permitAll
+//
+///auth/register/employee and /auth/register/admin → ADMIN only so put on auth/register/**
