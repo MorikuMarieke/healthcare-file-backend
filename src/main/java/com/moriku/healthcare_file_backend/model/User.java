@@ -2,9 +2,6 @@ package com.moriku.healthcare_file_backend.model;
 
 import jakarta.persistence.*;
 
-import java.util.HashSet;
-import java.util.Set;
-
 @Entity
 @Table(name = "users")
 public class User {
@@ -31,6 +28,12 @@ public class User {
     @ManyToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
+
+    @Column(nullable = false)
+    private boolean mustChangePassword = false;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private EmployeeProfile employeeProfile;
 
     public User() {}
 
@@ -94,5 +97,26 @@ public class User {
     public void setRole(Role role) {
         this.role = role;
     }
+
+    public boolean isMustChangePassword() {
+        return mustChangePassword;
+    }
+
+    public void setMustChangePassword(boolean mustChangePassword) {
+        this.mustChangePassword = mustChangePassword;
+    }
+
+    public EmployeeProfile getEmployeeProfile() {
+        return employeeProfile;
+    }
+
+    public void setEmployeeProfile(EmployeeProfile employeeProfile) {
+        this.employeeProfile = employeeProfile;
+
+        if (employeeProfile != null && employeeProfile.getUser() != this) {
+            employeeProfile.setUser(this);
+        }
+    }
+
 }
 

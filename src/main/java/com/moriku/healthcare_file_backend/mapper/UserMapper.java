@@ -2,8 +2,9 @@
 
 package com.moriku.healthcare_file_backend.mapper;
 
+import com.moriku.healthcare_file_backend.dto.UserCreateResponseDto;
 import com.moriku.healthcare_file_backend.dto.UserRegistrationRequestDto;
-import com.moriku.healthcare_file_backend.dto.UserRegistrationResponseDto;
+import com.moriku.healthcare_file_backend.dto.UserResponseDto;
 import com.moriku.healthcare_file_backend.model.Role;
 import com.moriku.healthcare_file_backend.model.User;
 
@@ -25,8 +26,8 @@ public final class UserMapper {
     }
 
     // Entity -> Response DTO
-    public static UserRegistrationResponseDto toResponse(User user) {
-        return new UserRegistrationResponseDto(
+    public static UserResponseDto toResponse(User user) {
+        return new UserResponseDto(
             user.getId(),
             user.getEmail(),
             user.getFirstName(),
@@ -34,4 +35,17 @@ public final class UserMapper {
             user.getRole().getName()
         );
     }
+
+    public static UserCreateResponseDto toCreateResponse(User user, String temporaryPassword) {
+        return new UserCreateResponseDto(
+            user.getId(),
+            user.getEmail(),
+            user.getFirstName(),
+            user.getLastName(),
+            user.getRole().getName(),
+            temporaryPassword,
+            user.isMustChangePassword()
+        );
+    }
+
 }

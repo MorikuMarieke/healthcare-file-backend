@@ -1,7 +1,7 @@
 package com.moriku.healthcare_file_backend.service;
 
 import com.moriku.healthcare_file_backend.dto.UserRegistrationRequestDto;
-import com.moriku.healthcare_file_backend.dto.UserRegistrationResponseDto;
+import com.moriku.healthcare_file_backend.dto.UserResponseDto;
 import com.moriku.healthcare_file_backend.mapper.UserMapper;
 import com.moriku.healthcare_file_backend.model.Role;
 import com.moriku.healthcare_file_backend.model.User;
@@ -23,19 +23,19 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public UserRegistrationResponseDto registerClient(UserRegistrationRequestDto req) {
+    public UserResponseDto registerClient(UserRegistrationRequestDto req) {
         return registerWithRole(req, "CLIENT");
     }
 
-    public UserRegistrationResponseDto registerEmployee(UserRegistrationRequestDto req) {
+    public UserResponseDto registerEmployee(UserRegistrationRequestDto req) {
         return registerWithRole(req, "EMPLOYEE");
     }
 
-    public UserRegistrationResponseDto registerAdmin(UserRegistrationRequestDto req) {
+    public UserResponseDto registerAdmin(UserRegistrationRequestDto req) {
         return registerWithRole(req, "ADMIN");
     }
 
-    private UserRegistrationResponseDto registerWithRole(UserRegistrationRequestDto req, String roleName) {
+    private UserResponseDto registerWithRole(UserRegistrationRequestDto req, String roleName) {
         if (userRepository.existsByEmail(req.getEmail())) {
             throw new IllegalArgumentException("Email already exists");
         }

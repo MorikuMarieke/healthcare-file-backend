@@ -1,14 +1,14 @@
 package com.moriku.healthcare_file_backend.dto;
 
-public class UserRegistrationResponseDto {
+public class UserResponseDto {
 
-    private Long id;
-    private String email;
-    private String firstName;
-    private String lastName;
-    private String role;
+    private final Long id;
+    private final String email;
+    private final String firstName;
+    private final String lastName;
+    private final String role;
 
-    public UserRegistrationResponseDto(Long id, String email, String firstName, String lastName, String role) {
+    public UserResponseDto(Long id, String email, String firstName, String lastName, String role) {
         this.id = id;
         this.email = email;
         this.firstName = firstName;

@@ -2,6 +2,7 @@ package com.moriku.healthcare_file_backend.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
 public class UserCreateRequestDto {
 
@@ -13,62 +14,52 @@ public class UserCreateRequestDto {
     private String email;
 
     @NotBlank
-    private String password;
-
-    @NotBlank
     private String firstName;
 
     @NotBlank
     private String lastName;
 
     @NotBlank
-    private String role; // CLIENT / EMPLOYEE / ADMIN
+    @Pattern(regexp = "^(EMPLOYEE|ADMIN)$", message = "Role must be EMPLOYEE or ADMIN")
+    private String role;
 
-    public @NotBlank String getBsn() {
+    public String getBsn() {
         return bsn;
     }
 
-    public void setBsn(@NotBlank String bsn) {
+    public void setBsn(String bsn) {
         this.bsn = bsn;
     }
 
-    public @Email @NotBlank String getEmail() {
+    public String getEmail() {
         return email;
     }
 
-    public void setEmail(@Email @NotBlank String email) {
+    public void setEmail(String email) {
         this.email = email;
     }
 
-    public @NotBlank String getPassword() {
-        return password;
-    }
-
-    public void setPassword(@NotBlank String password) {
-        this.password = password;
-    }
-
-    public @NotBlank String getFirstName() {
+    public String getFirstName() {
         return firstName;
     }
 
-    public void setFirstName(@NotBlank String firstName) {
+    public void setFirstName(String firstName) {
         this.firstName = firstName;
     }
 
-    public @NotBlank String getLastName() {
+    public String getLastName() {
         return lastName;
     }
 
-    public void setLastName(@NotBlank String lastName) {
+    public void setLastName(String lastName) {
         this.lastName = lastName;
     }
 
-    public @NotBlank String getRole() {
+    public String getRole() {
         return role;
     }
 
-    public void setRole(@NotBlank String role) {
+    public void setRole(String role) {
         this.role = role;
     }
 }

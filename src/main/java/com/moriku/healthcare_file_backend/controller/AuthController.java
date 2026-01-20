@@ -1,7 +1,7 @@
 package com.moriku.healthcare_file_backend.controller;
 
 import com.moriku.healthcare_file_backend.dto.UserRegistrationRequestDto;
-import com.moriku.healthcare_file_backend.dto.UserRegistrationResponseDto;
+import com.moriku.healthcare_file_backend.dto.UserResponseDto;
 import com.moriku.healthcare_file_backend.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -19,19 +19,19 @@ public class AuthController {
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public UserRegistrationResponseDto register(@Valid @RequestBody UserRegistrationRequestDto request) {
+    public UserResponseDto register(@Valid @RequestBody UserRegistrationRequestDto request) {
         return authService.registerClient(request);
     }
 
-    @PostMapping("/register/employee")
-    @ResponseStatus(HttpStatus.CREATED)
-    public UserRegistrationResponseDto registerEmployee(@Valid @RequestBody UserRegistrationRequestDto request) {
-        return authService.registerEmployee(request);
-    }
-
-    @PostMapping("/register/admin")
-    @ResponseStatus(HttpStatus.CREATED)
-    public UserRegistrationResponseDto registerAdmin(@Valid @RequestBody UserRegistrationRequestDto request) {
-        return authService.registerAdmin(request);
-    }
+//    @PostMapping("/register/employee")
+//    @ResponseStatus(HttpStatus.CREATED)
+//    public UserResponseDto registerEmployee(@Valid @RequestBody UserRegistrationRequestDto request) {
+//        return authService.registerEmployee(request);
+//    }
+//
+//    @PostMapping("/register/admin")
+//    @ResponseStatus(HttpStatus.CREATED)
+//    public UserResponseDto registerAdmin(@Valid @RequestBody UserRegistrationRequestDto request) {
+//        return authService.registerAdmin(request);
+//    }
 }
