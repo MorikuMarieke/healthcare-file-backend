@@ -6,12 +6,13 @@ import jakarta.validation.constraints.Pattern;
 
 public class UserCreateRequestDto {
 
-    @NotBlank
-    private String bsn;
-
     @Email
     @NotBlank
     private String email;
+
+    @NotBlank
+    @Pattern(regexp = "^(EMPLOYEE|ADMIN)$", message = "Role must be EMPLOYEE or ADMIN")
+    private String role;
 
     @NotBlank
     private String firstName;
@@ -19,17 +20,10 @@ public class UserCreateRequestDto {
     @NotBlank
     private String lastName;
 
-    @NotBlank
-    @Pattern(regexp = "^(EMPLOYEE|ADMIN)$", message = "Role must be EMPLOYEE or ADMIN")
-    private String role;
-
-    public String getBsn() {
-        return bsn;
-    }
-
-    public void setBsn(String bsn) {
-        this.bsn = bsn;
-    }
+    // optional employee profile details (only if you want to create profile in same request)
+    private String workPhoneNumber;
+    private String personalPhoneNumber;
+    private String personalEmail;
 
     public String getEmail() {
         return email;
@@ -39,27 +33,51 @@ public class UserCreateRequestDto {
         this.email = email;
     }
 
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
     public String getRole() {
         return role;
     }
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public @NotBlank String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(@NotBlank String firstName) {
+        this.firstName = firstName;
+    }
+
+    public @NotBlank String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(@NotBlank String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getWorkPhoneNumber() {
+        return workPhoneNumber;
+    }
+
+    public void setWorkPhoneNumber(String workPhoneNumber) {
+        this.workPhoneNumber = workPhoneNumber;
+    }
+
+    public String getPersonalPhoneNumber() {
+        return personalPhoneNumber;
+    }
+
+    public void setPersonalPhoneNumber(String personalPhoneNumber) {
+        this.personalPhoneNumber = personalPhoneNumber;
+    }
+
+    public String getPersonalEmail() {
+        return personalEmail;
+    }
+
+    public void setPersonalEmail(String personalEmail) {
+        this.personalEmail = personalEmail;
     }
 }

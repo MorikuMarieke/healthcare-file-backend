@@ -2,6 +2,8 @@ package com.moriku.healthcare_file_backend.model;
 
 import jakarta.persistence.*;
 
+import java.time.Instant;
+
 @Entity
 @Table(name = "users")
 public class User {
@@ -11,52 +13,38 @@ public class User {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String bsn;
-
-    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false)
     private String password;
 
     @Column(nullable = false)
-    private String firstName;
+    private boolean mustChangePassword = true;
 
     @Column(nullable = false)
-    private String lastName;
+    private Instant createdAt;
 
     @ManyToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
-    @Column(nullable = false)
-    private boolean mustChangePassword = false;
-
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private EmployeeProfile employeeProfile;
-
     public User() {}
 
-    public User(String bsn, String email, String password, String firstName, String lastName, Role role) {
-        this.bsn = bsn;
+    public User(String email, String password, Role role) {
         this.email = email;
         this.password = password;
-        this.firstName = firstName;
-        this.lastName = lastName;
         this.role = role;
+    }
+
+    @PrePersist
+    void onCreate() {
+        this.createdAt = Instant.now();
     }
 
     public Long getId() {
         return id;
     }
 
-    public String getBsn() {
-        return bsn;
-    }
-
-    public void setBsn(String bsn) {
-        this.bsn = bsn;
-    }
 
     public String getEmail() {
         return email;
@@ -72,22 +60,6 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
     }
 
     public Role getRole() {
@@ -106,17 +78,27 @@ public class User {
         this.mustChangePassword = mustChangePassword;
     }
 
-    public EmployeeProfile getEmployeeProfile() {
-        return employeeProfile;
+    // helpers
+
+    // if (user.isAdmin()) { ... }
+    public boolean hasRole(String roleName) {
+        return role != null && role.getName() != null && role.getName().equals(roleName);
     }
 
-    public void setEmployeeProfile(EmployeeProfile employeeProfile) {
-        this.employeeProfile = employeeProfile;
-
-        if (employeeProfile != null && employeeProfile.getUser() != this) {
-            employeeProfile.setUser(this);
-        }
+    public boolean isAdmin() {
+        return hasRole("ADMIN");
     }
 
+    public boolean isEmployee() {
+        return hasRole("EMPLOYEE");
+    }
+
+    public boolean isClient() {
+        return hasRole("CLIENT");
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
 }
 

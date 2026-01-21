@@ -3,6 +3,7 @@ package com.moriku.healthcare_file_backend.dto;
 public class EmployeeProfileResponseDto {
 
     private final Long userId;
+
     private final String workEmail;
     private final String workPhoneNumber;
     private final String personalPhoneNumber;

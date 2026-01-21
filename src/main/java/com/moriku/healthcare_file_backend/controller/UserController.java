@@ -34,19 +34,13 @@ public class UserController {
         return userService.createUser(request);
     }
 
-    @PatchMapping("/{id}")
-    public UserResponseDto patchUser(@PathVariable Long id,
-                                     @RequestBody UserUpdateRequestDto request) {
-        return userService.patchUser(id, request);
-    }
-
     @PatchMapping("/{id}/password") //TODO: After implementing security, first update {id} to me so only logged in user can change the password.
-    public String changePassword(
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void changePassword(
         @PathVariable Long id,
         @Valid @RequestBody UserPasswordChangeRequestDto request
     ) {
         userService.changePassword(id, request);
-        return "Password updated succesfully"; //TODO: update this later with custom exceptions
     }
 
     @DeleteMapping("/{id}") //TODO: Maybe change to soft delete eventually

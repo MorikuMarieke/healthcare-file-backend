@@ -2,10 +2,13 @@ package com.moriku.healthcare_file_backend.service;
 
 import com.moriku.healthcare_file_backend.dto.*;
 import com.moriku.healthcare_file_backend.mapper.UserMapper;
+import com.moriku.healthcare_file_backend.model.EmployeeProfile;
 import com.moriku.healthcare_file_backend.model.Role;
 import com.moriku.healthcare_file_backend.model.User;
+import com.moriku.healthcare_file_backend.repository.EmployeeProfileRepository;
 import com.moriku.healthcare_file_backend.repository.RoleRepository;
 import com.moriku.healthcare_file_backend.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -17,11 +20,16 @@ public class UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmployeeProfileRepository employeeProfileRepository;
 
-    public UserService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository,
+                       RoleRepository roleRepository,
+                       PasswordEncoder passwordEncoder,
+                       EmployeeProfileRepository employeeProfileRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.employeeProfileRepository = employeeProfileRepository;
     }
 
     public List<UserResponseDto> getAllUsers() {
@@ -37,60 +45,31 @@ public class UserService {
         return UserMapper.toResponse(user);
     }
 
+    @Transactional
     public UserCreateResponseDto createUser(UserCreateRequestDto req) {
+
         if (userRepository.existsByEmail(req.getEmail())) {
-            throw new IllegalArgumentException("Email already exists");
-        }
-        if (userRepository.existsByBsn(req.getBsn())) {
-            throw new IllegalArgumentException("BSN already exists");
+            throw new IllegalArgumentException("Email already exists");//TODO custom 409 exception handling
         }
 
-        String roleName = req.getRole().trim().toUpperCase();
-
-        // Staff provisioning endpoint: only EMPLOYEE/ADMIN
-        if (!roleName.equals("EMPLOYEE") && !roleName.equals("ADMIN")) {
-            throw new IllegalArgumentException("Role must be EMPLOYEE or ADMIN");
-        }
-
+        String roleName = req.getRole().trim().toUpperCase(); // EMPLOYEE or ADMIN (DTO pattern already restricts)
         Role role = roleRepository.findByName(roleName)
             .orElseThrow(() -> new IllegalArgumentException("Role not found: " + roleName));
 
         String tempPassword = generateTempPassword();
         String encodedPassword = passwordEncoder.encode(tempPassword);
 
-        User user = new User(
-            req.getBsn(),
-            req.getEmail(),
-            encodedPassword,
-            req.getFirstName(),
-            req.getLastName(),
-            role
-        );
-        user.setMustChangePassword(true);
-
+        User user = UserMapper.toEntity(req, role, encodedPassword); // overload we add below
         User saved = userRepository.save(user);
+
+        EmployeeProfile profile = UserMapper.toEmployeeProfile(req, saved); // method we add below
+        employeeProfileRepository.save(profile);
 
         return UserMapper.toCreateResponse(saved, tempPassword);
     }
 
     private String generateTempPassword() {
         return java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 12);
-    }
-
-    public UserResponseDto patchUser(Long id, UserUpdateRequestDto req) {
-        User user = userRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
-
-        if (req.getFirstName() != null) user.setFirstName(req.getFirstName());
-        if (req.getLastName() != null) user.setLastName(req.getLastName());
-
-        if (req.getPassword() != null) {
-            user.setPassword(passwordEncoder.encode(req.getPassword()));
-            user.setMustChangePassword(false); // optional, but makes sense
-        }
-
-        User saved = userRepository.save(user);
-        return UserMapper.toResponse(saved);
     }
 
     public void changePassword(Long id, UserPasswordChangeRequestDto req) {

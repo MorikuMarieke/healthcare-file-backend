@@ -1,6 +1,5 @@
 package com.moriku.healthcare_file_backend.controller;
 
-import com.moriku.healthcare_file_backend.dto.EmployeeProfileCreateRequestDto;
 import com.moriku.healthcare_file_backend.dto.EmployeeProfileResponseDto;
 import com.moriku.healthcare_file_backend.dto.EmployeeProfileUpdateRequestDto;
 import com.moriku.healthcare_file_backend.service.EmployeeProfileService;
@@ -16,15 +15,6 @@ public class EmployeeProfileController {
 
     public EmployeeProfileController(EmployeeProfileService employeeProfileService) {
         this.employeeProfileService = employeeProfileService;
-    }
-
-    @PostMapping("/{userId}")
-    @ResponseStatus(HttpStatus.CREATED)
-    public EmployeeProfileResponseDto createEmployeeProfile(
-        @PathVariable Long userId,
-        @Valid @RequestBody EmployeeProfileCreateRequestDto request
-    ) {
-        return employeeProfileService.createEmployeeProfile(userId, request);
     }
 
     @GetMapping("/{userId}")

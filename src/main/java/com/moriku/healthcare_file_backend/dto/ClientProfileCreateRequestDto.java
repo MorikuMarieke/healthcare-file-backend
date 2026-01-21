@@ -1,20 +1,19 @@
 package com.moriku.healthcare_file_backend.dto;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
-public class UserRegistrationRequestDto {
+public class ClientProfileCreateRequestDto {
+
     @NotBlank
     @Pattern(regexp = "^\\d{9}$", message = "BSN must be exactly 9 digits")
     private String bsn;
 
-    @Email
     @NotBlank
-    private String email;
+    private String firstName;
 
     @NotBlank
-    private String password;
+    private String lastName;
 
     public String getBsn() {
         return bsn;
@@ -24,19 +23,19 @@ public class UserRegistrationRequestDto {
         this.bsn = bsn;
     }
 
-    public String getEmail() {
-        return email;
+    public String getFirstName() {
+        return firstName;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
     }
 
-    public String getPassword() {
-        return password;
+    public String getLastName() {
+        return lastName;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
 }

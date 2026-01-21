@@ -2,34 +2,84 @@ package com.moriku.healthcare_file_backend.model;
 
 import jakarta.persistence.*;
 
-import java.time.LocalDate;
+import java.time.Instant;
 
 @Entity
 @Table(name = "client_profiles")
 public class ClientProfile {
 
     @Id
-    private Long id; // same as user id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @OneToOne
-    @MapsId
-    @JoinColumn(name = "user_id")
+    @Column(nullable = false, unique = true)
+    private String bsn;
+
+    @Column(nullable = false)
+    private String firstName;
+
+    @Column(nullable = false)
+    private String lastName;
+
+    @Column(nullable = false)
+    private boolean active = true;
+
+    @Column(nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @OneToOne(optional = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", unique = true)
     private User user;
 
-    private Boolean isActive;
-    private LocalDate birthDate;
-//    private ContactDetails contactDetails; // TODO: implement later when it's time to add the model
-//    private Employee primaryCaregiver; // TODO: implement later when it's time to add the model
+    @OneToOne(mappedBy = "clientProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private ContactDetails contactDetails;
 
+    public ClientProfile() {
+    }
 
-    public ClientProfile(User user, Boolean isActive, LocalDate birthDate) {
-        this.user = user;
-        this.isActive = isActive;
-        this.birthDate = birthDate;
+    @PrePersist
+    void onCreate() {
+        this.createdAt = Instant.now();
     }
 
     public Long getId() {
         return id;
+    }
+
+    public String getBsn() {
+        return bsn;
+    }
+
+    public void setBsn(String bsn) {
+        this.bsn = bsn;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
     }
 
     public User getUser() {
@@ -40,19 +90,16 @@ public class ClientProfile {
         this.user = user;
     }
 
-    public Boolean getActive() {
-        return isActive;
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
     }
 
-    public void setActive(Boolean active) {
-        isActive = active;
+    public ContactDetails getContactDetails() {
+        return contactDetails;
     }
 
-    public LocalDate getBirthDate() {
-        return birthDate;
+    public void setContactDetails(ContactDetails contactDetails) {
+        this.contactDetails = contactDetails;
     }
 
-    public void setBirthDate(LocalDate birthDate) {
-        this.birthDate = birthDate;
-    }
 }

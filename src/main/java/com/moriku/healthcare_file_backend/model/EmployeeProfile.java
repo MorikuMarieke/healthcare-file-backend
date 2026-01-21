@@ -14,17 +14,20 @@ public class EmployeeProfile {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @Column (nullable = false)
-    private Boolean isMainNurse;
-
-    @Column (nullable = false)
+    @Column
     private String workPhoneNumber;
 
-    @Column (nullable = false)
+    @Column
     private String personalPhoneNumber;
 
     @Column
     private String personalEmail;
+
+    @Column (nullable = false)
+    private String firstName;
+
+    @Column (nullable = false)
+    private String lastName;
 
     public EmployeeProfile() {}
 
@@ -42,14 +45,6 @@ public class EmployeeProfile {
 
     public void setUser(User user) {
         this.user = user;
-    }
-
-    public Boolean getMainNurse() {
-        return isMainNurse;
-    }
-
-    public void setMainNurse(Boolean mainNurse) {
-        isMainNurse = mainNurse;
     }
 
     public String getWorkPhoneNumber() {
@@ -74,6 +69,22 @@ public class EmployeeProfile {
 
     public void setPersonalEmail(String personalEmail) {
         this.personalEmail = personalEmail;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
 }
 

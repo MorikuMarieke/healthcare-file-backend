@@ -1,10 +1,9 @@
 package com.moriku.healthcare_file_backend.dto;
 
-public class UserUpdateRequestDto {
-
+public class ClientProfileUpdateRequestDto {
     private String firstName;
     private String lastName;
-    private String password;
+    private Boolean active;
 
     public String getFirstName() {
         return firstName;
@@ -22,11 +21,11 @@ public class UserUpdateRequestDto {
         this.lastName = lastName;
     }
 
-    public String getPassword() {
-        return password;
+    public Boolean getActive() {
+        return active;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setActive(Boolean active) {
+        this.active = active;
     }
 }
