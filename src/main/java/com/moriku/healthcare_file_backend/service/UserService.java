@@ -65,7 +65,7 @@ public class UserService {
         EmployeeProfile profile = UserMapper.toEmployeeProfile(req, saved); // method we add below
         employeeProfileRepository.save(profile);
 
-        return UserMapper.toCreateResponse(saved, tempPassword);
+        return UserMapper.toCreateResponse(saved, profile, tempPassword);
     }
 
     private String generateTempPassword() {

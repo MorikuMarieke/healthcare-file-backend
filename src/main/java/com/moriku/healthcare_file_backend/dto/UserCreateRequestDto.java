@@ -23,7 +23,7 @@ public class UserCreateRequestDto {
     // optional employee profile details (only if you want to create profile in same request)
     private String workPhoneNumber;
     private String personalPhoneNumber;
-    private String personalEmail;
+    private String personalEmail;//TODO: Double ckeck if these values are necessary here or if i will just do this as a patch of client profile, i think currently there is no setup in the requestDTO.
 
     public String getEmail() {
         return email;

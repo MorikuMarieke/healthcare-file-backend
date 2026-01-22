@@ -10,7 +10,8 @@ import com.moriku.healthcare_file_backend.model.User;
 
 public final class UserMapper {
 
-    private UserMapper() {}
+    private UserMapper() {
+    }
 
     // Registration Request -> User entity (account-only)
     public static User toEntity(UserRegistrationRequestDto req, Role role, String encodedPassword) {
@@ -31,7 +32,6 @@ public final class UserMapper {
         return user;
     }
 
-
     // Entity -> Response DTO (account-only)
     public static UserResponseDto toResponse(User user) {
         return new UserResponseDto(
@@ -44,13 +44,15 @@ public final class UserMapper {
     }
 
     // Entity -> Create Response DTO (account-only + temp password)
-    public static UserCreateResponseDto toCreateResponse(User user, String temporaryPassword) {
+    public static UserCreateResponseDto toCreateResponse(User user, EmployeeProfile profile, String temporaryPassword) {
         return new UserCreateResponseDto(
             user.getId(),
             user.getEmail(),
             user.getRole().getName(),
             temporaryPassword,
-            user.isMustChangePassword()
+            user.isMustChangePassword(),
+            profile.getFirstName(),
+            profile.getLastName()
         );
     }
 
@@ -60,7 +62,6 @@ public final class UserMapper {
         profile.setFirstName(req.getFirstName());
         profile.setLastName(req.getLastName());
 
-        // only set if your EmployeeProfile columns are nullable
         if (req.getWorkPhoneNumber() != null) profile.setWorkPhoneNumber(req.getWorkPhoneNumber());
         if (req.getPersonalPhoneNumber() != null) profile.setPersonalPhoneNumber(req.getPersonalPhoneNumber());
         if (req.getPersonalEmail() != null) profile.setPersonalEmail(req.getPersonalEmail());

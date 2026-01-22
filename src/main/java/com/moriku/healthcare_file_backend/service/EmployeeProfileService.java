@@ -1,11 +1,9 @@
 package com.moriku.healthcare_file_backend.service;
 
-import com.moriku.healthcare_file_backend.dto.EmployeeProfileCreateRequestDto;
 import com.moriku.healthcare_file_backend.dto.EmployeeProfileResponseDto;
 import com.moriku.healthcare_file_backend.dto.EmployeeProfileUpdateRequestDto;
 import com.moriku.healthcare_file_backend.mapper.EmployeeProfileMapper;
 import com.moriku.healthcare_file_backend.model.EmployeeProfile;
-import com.moriku.healthcare_file_backend.model.User;
 import com.moriku.healthcare_file_backend.repository.EmployeeProfileRepository;
 import com.moriku.healthcare_file_backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -14,11 +12,9 @@ import org.springframework.stereotype.Service;
 public class EmployeeProfileService {
 
     private final EmployeeProfileRepository employeeProfileRepository;
-    private final UserRepository userRepository;
 
     public EmployeeProfileService(EmployeeProfileRepository employeeProfileRepository, UserRepository userRepository) {
         this.employeeProfileRepository = employeeProfileRepository;
-        this.userRepository = userRepository;
     }
 
     public EmployeeProfileResponseDto getEmployeeProfile(Long userId) {
