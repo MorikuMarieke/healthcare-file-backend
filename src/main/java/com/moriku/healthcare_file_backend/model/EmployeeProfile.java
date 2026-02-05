@@ -23,13 +23,14 @@ public class EmployeeProfile {
     @Column
     private String personalEmail;
 
-    @Column (nullable = false)
+    @Column(nullable = false)
     private String firstName;
 
-    @Column (nullable = false)
+    @Column(nullable = false)
     private String lastName;
 
-    public EmployeeProfile() {}
+    public EmployeeProfile() {
+    }
 
     public EmployeeProfile(User user) {
         this.user = user;

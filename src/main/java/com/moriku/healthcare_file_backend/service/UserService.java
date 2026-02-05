@@ -8,10 +8,14 @@ import com.moriku.healthcare_file_backend.model.User;
 import com.moriku.healthcare_file_backend.repository.EmployeeProfileRepository;
 import com.moriku.healthcare_file_backend.repository.RoleRepository;
 import com.moriku.healthcare_file_backend.repository.UserRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -46,50 +50,59 @@ public class UserService {
     }
 
     @Transactional
-    public UserCreateResponseDto createUser(UserCreateRequestDto req) {
+    public UserCreateResponseDto createUser(UserCreateRequestDto dto) {
 
-        if (userRepository.existsByEmail(req.getEmail())) {
-            throw new IllegalArgumentException("Email already exists");//TODO custom 409 exception handling
+        if (userRepository.existsByEmail(dto.getEmail())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
         }
 
-        String roleName = req.getRole().trim().toUpperCase(); // EMPLOYEE or ADMIN (DTO pattern already restricts)
+        String roleName = dto.getRole();
+
+        if (!"ADMIN".equals(roleName) && !"EMPLOYEE".equals(roleName)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Role must be ADMIN or EMPLOYEE");
+        }
+
         Role role = roleRepository.findByName(roleName)
-            .orElseThrow(() -> new IllegalArgumentException("Role not found: " + roleName));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Role not found: " + roleName));
 
         String tempPassword = generateTempPassword();
         String encodedPassword = passwordEncoder.encode(tempPassword);
 
-        User user = UserMapper.toEntity(req, role, encodedPassword); // overload we add below
+        User user = UserMapper.toEntity(dto, role, encodedPassword);
+        user.setPasswordChangedAt(Instant.now());
+
         User saved = userRepository.save(user);
 
-        EmployeeProfile profile = UserMapper.toEmployeeProfile(req, saved); // method we add below
+        EmployeeProfile profile = UserMapper.toEmployeeProfile(dto, saved);
         employeeProfileRepository.save(profile);
 
         return UserMapper.toCreateResponse(saved, profile, tempPassword);
     }
 
+
+
     private String generateTempPassword() {
         return java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 12);
     }
 
-    public void changePassword(Long id, UserPasswordChangeRequestDto req) {
+    public void changePassword(Long id, UserPasswordChangeRequestDto dto) {
         User user = userRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
 
-        if (!passwordEncoder.matches(req.getCurrentPassword(), user.getPassword())) {
+        if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
             throw new IllegalArgumentException("Current password is incorrect");
         }
 
-        if (!req.getNewPassword().equals(req.getConfirmNewPassword())) {
+        if (!dto.getNewPassword().equals(dto.getConfirmNewPassword())) {
             throw new IllegalArgumentException("New password and confirmation do not match");
         }
 
-        if (passwordEncoder.matches(req.getNewPassword(), user.getPassword())) {
+        if (passwordEncoder.matches(dto.getNewPassword(), user.getPassword())) {
             throw new IllegalArgumentException("New password must be different from current password");
         }
 
-        user.setPassword(passwordEncoder.encode(req.getNewPassword()));
-        user.setMustChangePassword(false);
+        user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        user.setPasswordChangedAt(Instant.now());
 
         userRepository.save(user);
     }
@@ -101,4 +114,7 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
+    public User getUserEntityByEmail(String email) {
+        return userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User " + email + " not found"));
+    }
 }

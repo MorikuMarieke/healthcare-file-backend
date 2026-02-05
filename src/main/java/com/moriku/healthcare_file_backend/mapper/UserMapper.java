@@ -8,6 +8,8 @@ import com.moriku.healthcare_file_backend.model.EmployeeProfile;
 import com.moriku.healthcare_file_backend.model.Role;
 import com.moriku.healthcare_file_backend.model.User;
 
+import java.time.Instant;
+
 public final class UserMapper {
 
     private UserMapper() {
@@ -19,7 +21,7 @@ public final class UserMapper {
         user.setEmail(req.getEmail());
         user.setPassword(encodedPassword);
         user.setRole(role);
-        user.setMustChangePassword(false); // registration sets a real password
+        user.setPasswordChangedAt(Instant.now()); // registration sets a real password
         return user;
     }
 
@@ -28,7 +30,7 @@ public final class UserMapper {
         user.setEmail(req.getEmail());
         user.setPassword(encodedPassword);
         user.setRole(role);
-        user.setMustChangePassword(true); // staff created -> temp password
+        user.setPasswordChangedAt(Instant.now()); // staff created -> temp password
         return user;
     }
 
@@ -38,9 +40,8 @@ public final class UserMapper {
             user.getId(),
             user.getEmail(),
             user.getRole().getName(),
-            user.isMustChangePassword(),
             user.getCreatedAt()
-        );
+            );
     }
 
     // Entity -> Create Response DTO (account-only + temp password)
@@ -50,9 +51,9 @@ public final class UserMapper {
             user.getEmail(),
             user.getRole().getName(),
             temporaryPassword,
-            user.isMustChangePassword(),
             profile.getFirstName(),
-            profile.getLastName()
+            profile.getLastName(),
+            user.getCreatedAt()
         );
     }
 
