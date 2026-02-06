@@ -1,6 +1,7 @@
 package com.moriku.healthcare_file_backend.controller;
 
 import com.moriku.healthcare_file_backend.dto.*;
+import com.moriku.healthcare_file_backend.service.AuthService;
 import com.moriku.healthcare_file_backend.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -13,9 +14,11 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final AuthService authService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, AuthService authService) {
         this.userService = userService;
+        this.authService = authService;
     }
 
     @GetMapping
@@ -30,17 +33,14 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserCreateResponseDto createUser(@Valid @RequestBody UserCreateRequestDto request) {
-        return userService.createUser(request);
+    public UserInviteResponseDto createUser(@Valid @RequestBody UserCreateRequestDto dto) {
+        return userService.createUser(dto);
     }
 
-    @PatchMapping("/{id}/password") //TODO: After implementing security, first update {id} to me so only logged in user can change the password.
+    @PostMapping("/auth/invite/accept")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void changePassword(
-        @PathVariable Long id,
-        @Valid @RequestBody UserPasswordChangeRequestDto request
-    ) {
-        userService.changePassword(id, request);
+    public void acceptInvite(@Valid @RequestBody UserInviteAcceptRequestDto dto) {
+        authService.acceptInvite(dto);
     }
 
     @DeleteMapping("/{id}") //TODO: Maybe change to soft delete eventually
@@ -49,5 +49,8 @@ public class UserController {
         userService.deleteUser(id);
     }
 
-
+    @PostMapping("/{id}/reset-password")
+    public UserPasswordResetResponseDto resetPassword(@PathVariable Long id) {
+        return userService.resetPassword(id);
+    }
 }

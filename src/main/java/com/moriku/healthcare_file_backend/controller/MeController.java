@@ -2,11 +2,12 @@ package com.moriku.healthcare_file_backend.controller;
 
 import com.moriku.healthcare_file_backend.dto.ClientProfileResponseDto;
 import com.moriku.healthcare_file_backend.dto.EmployeeProfileResponseDto;
+import com.moriku.healthcare_file_backend.dto.UserPasswordChangeRequestDto;
 import com.moriku.healthcare_file_backend.dto.UserResponseDto;
 import com.moriku.healthcare_file_backend.service.MeService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/me")
@@ -31,5 +32,11 @@ public class MeController {
     @GetMapping("/employee-profile")
     public EmployeeProfileResponseDto myEmployeeProfile() {
         return meService.getMyEmployeeProfile();
+    }
+
+    @PatchMapping("/password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void changeMyPassword(@Valid @RequestBody UserPasswordChangeRequestDto request) {
+        meService.changeMyPassword(request);
     }
 }

@@ -44,6 +44,7 @@ public class SecurityConfig {
             // ---- Public auth endpoints ----
             .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
             .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
+            .requestMatchers(HttpMethod.POST, "/auth/invite/accept").permitAll()
 
             // ---- Users (staff accounts) ----
             // POST /users -> ADMIN creates EMPLOYEE or ADMIN
@@ -71,6 +72,8 @@ public class SecurityConfig {
             // If only staff should edit employee profiles:
             .requestMatchers(HttpMethod.PATCH, "/employee-profiles/**").hasAnyAuthority("ADMIN", "EMPLOYEE")
             .requestMatchers(HttpMethod.GET, "/employee-profiles/**").hasAnyAuthority("ADMIN", "EMPLOYEE")
+            .requestMatchers("/me/**").authenticated()
+
 
             // ---- Everything else requires a valid token ----
             .anyRequest().authenticated()

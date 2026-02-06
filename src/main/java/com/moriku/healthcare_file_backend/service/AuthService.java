@@ -1,14 +1,13 @@
 package com.moriku.healthcare_file_backend.service;
 
-import com.moriku.healthcare_file_backend.dto.UserLoginRequestDto;
-import com.moriku.healthcare_file_backend.dto.UserLoginResponseDto;
-import com.moriku.healthcare_file_backend.dto.UserRegistrationRequestDto;
-import com.moriku.healthcare_file_backend.dto.UserResponseDto;
+import com.moriku.healthcare_file_backend.dto.*;
 import com.moriku.healthcare_file_backend.mapper.UserMapper;
 import com.moriku.healthcare_file_backend.model.ClientProfile;
+import com.moriku.healthcare_file_backend.model.InviteToken;
 import com.moriku.healthcare_file_backend.model.Role;
 import com.moriku.healthcare_file_backend.model.User;
 import com.moriku.healthcare_file_backend.repository.ClientProfileRepository;
+import com.moriku.healthcare_file_backend.repository.InviteTokenRepository;
 import com.moriku.healthcare_file_backend.repository.RoleRepository;
 import com.moriku.healthcare_file_backend.repository.UserRepository;
 import com.moriku.healthcare_file_backend.security.JwtUtil;
@@ -33,14 +32,16 @@ public class AuthService {
     private final ClientProfileRepository clientProfileRepository;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
+    private final InviteTokenRepository inviteTokenRepository;
 
-    public AuthService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, ClientProfileRepository clientProfileRepository, AuthenticationManager authenticationManager, JwtUtil jwtUtil) {
+    public AuthService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, ClientProfileRepository clientProfileRepository, AuthenticationManager authenticationManager, JwtUtil jwtUtil, InviteTokenRepository inviteTokenRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.clientProfileRepository = clientProfileRepository;
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
+        this.inviteTokenRepository = inviteTokenRepository;
     }
 
     @Transactional
@@ -95,7 +96,6 @@ public class AuthService {
         return UserMapper.toResponse(saved);
     }
 
-
     public UserLoginResponseDto login(UserLoginRequestDto request) {
         Authentication authentication = authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
@@ -105,6 +105,33 @@ public class AuthService {
         String token = jwtUtil.generateToken(userDetails);
 
         return new UserLoginResponseDto(token);
+    }
+
+    @Transactional
+    public void acceptInvite(String token, UserInviteAcceptRequestDto dto) {
+        InviteToken invite = inviteTokenRepository.findByToken(token)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "Invalid invite token"
+            ));
+
+        if (invite.isUsed() || invite.isExpired()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "Invite token expired or already used"
+            );
+        }
+
+        User user = invite.getUser();
+
+        if (!user.getEmail().equalsIgnoreCase(dto.getEmail())) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "Email does not match invite"
+            );
+        }
+
+        user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        user.setPasswordChangedAt(Instant.now());
+
+        invite.setUsedAt(Instant.now());
     }
 
 }

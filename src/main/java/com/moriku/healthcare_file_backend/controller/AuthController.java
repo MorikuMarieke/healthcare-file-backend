@@ -1,9 +1,6 @@
 package com.moriku.healthcare_file_backend.controller;
 
-import com.moriku.healthcare_file_backend.dto.UserLoginRequestDto;
-import com.moriku.healthcare_file_backend.dto.UserLoginResponseDto;
-import com.moriku.healthcare_file_backend.dto.UserRegistrationRequestDto;
-import com.moriku.healthcare_file_backend.dto.UserResponseDto;
+import com.moriku.healthcare_file_backend.dto.*;
 import com.moriku.healthcare_file_backend.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -28,6 +25,12 @@ public class AuthController {
     @PostMapping("/login")
     public UserLoginResponseDto login(@Valid @RequestBody UserLoginRequestDto request) {
         return authService.login(request);
+    }
+
+    @PostMapping("/invite/accept")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void acceptInvite(@RequestParam String token, @Valid @RequestBody UserInviteAcceptRequestDto dto) {
+        authService.acceptInvite(token, dto);
     }
 
 }

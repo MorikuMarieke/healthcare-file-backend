@@ -2,6 +2,7 @@ package com.moriku.healthcare_file_backend.service;
 
 import com.moriku.healthcare_file_backend.dto.ClientProfileResponseDto;
 import com.moriku.healthcare_file_backend.dto.EmployeeProfileResponseDto;
+import com.moriku.healthcare_file_backend.dto.UserPasswordChangeRequestDto;
 import com.moriku.healthcare_file_backend.dto.UserResponseDto;
 import com.moriku.healthcare_file_backend.mapper.ClientProfileMapper;
 import com.moriku.healthcare_file_backend.mapper.EmployeeProfileMapper;
@@ -13,9 +14,13 @@ import com.moriku.healthcare_file_backend.repository.ClientProfileRepository;
 import com.moriku.healthcare_file_backend.repository.EmployeeProfileRepository;
 import com.moriku.healthcare_file_backend.repository.UserRepository;
 import com.moriku.healthcare_file_backend.security.SecurityUtils;
+import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.time.Instant;
 
 @Service
 public class MeService {
@@ -23,15 +28,18 @@ public class MeService {
     private final UserRepository userRepository;
     private final ClientProfileRepository clientProfileRepository;
     private final EmployeeProfileRepository employeeProfileRepository;
+    private final PasswordEncoder passwordEncoder;
+
 
     public MeService(
         UserRepository userRepository,
         ClientProfileRepository clientProfileRepository,
-        EmployeeProfileRepository employeeProfileRepository
+        EmployeeProfileRepository employeeProfileRepository, PasswordEncoder passwordEncoder
     ) {
         this.userRepository = userRepository;
         this.clientProfileRepository = clientProfileRepository;
         this.employeeProfileRepository = employeeProfileRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public UserResponseDto getMe() {
@@ -76,4 +84,22 @@ public class MeService {
         return userRepository.findByEmail(email)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
     }
+
+    @Transactional
+    public void changeMyPassword(UserPasswordChangeRequestDto dto) {
+        User user = getCurrentUserOrThrow();
+
+        if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Old password is incorrect");
+        }
+
+        if (dto.getCurrentPassword().equals(dto.getNewPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "New password must be different from old password");
+        }
+
+
+        user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        user.setPasswordChangedAt(Instant.now());
+    }
+
 }

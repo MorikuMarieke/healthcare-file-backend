@@ -28,6 +28,9 @@ public class User {
     @Column(nullable = false)
     private Instant passwordChangedAt;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private EmployeeProfile employeeProfile;
+
     public User() {}
 
     public User(String email, String password, Role role) {
@@ -101,6 +104,19 @@ public class User {
 
     public void setPasswordChangedAt(Instant passwordChangedAt) {
         this.passwordChangedAt = passwordChangedAt;
+    }
+
+    public EmployeeProfile getEmployeeProfile() {
+        return employeeProfile;
+    }
+
+
+    public void setEmployeeProfile(EmployeeProfile employeeProfile) {
+        this.employeeProfile = employeeProfile;
+
+        if (employeeProfile != null) {
+            employeeProfile.setUser(this);
+        }
     }
 }
 

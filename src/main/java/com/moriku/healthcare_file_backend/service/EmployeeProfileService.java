@@ -5,7 +5,6 @@ import com.moriku.healthcare_file_backend.dto.EmployeeProfileUpdateRequestDto;
 import com.moriku.healthcare_file_backend.mapper.EmployeeProfileMapper;
 import com.moriku.healthcare_file_backend.model.EmployeeProfile;
 import com.moriku.healthcare_file_backend.repository.EmployeeProfileRepository;
-import com.moriku.healthcare_file_backend.repository.UserRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -16,7 +15,7 @@ public class EmployeeProfileService {
 
     private final EmployeeProfileRepository employeeProfileRepository;
 
-    public EmployeeProfileService(EmployeeProfileRepository employeeProfileRepository, UserRepository userRepository) {
+    public EmployeeProfileService(EmployeeProfileRepository employeeProfileRepository) {
         this.employeeProfileRepository = employeeProfileRepository;
     }
 
@@ -24,7 +23,7 @@ public class EmployeeProfileService {
         return employeeProfileRepository.findById(userId)
             .orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.NOT_FOUND,
-                "Employee profile does not exist for this user"
+                "Employee profile does not exist for this userId: " + userId
             ));
     }
 
@@ -44,10 +43,4 @@ public class EmployeeProfileService {
         return EmployeeProfileMapper.toResponse(profile);
     }
 
-    public void deleteEmployeeProfile(Long userId) {
-        if (!employeeProfileRepository.existsById(userId)) {
-            throw new IllegalArgumentException("EmployeeProfile not found for user id: " + userId);
-        }
-        employeeProfileRepository.deleteById(userId);
-    }
 }
