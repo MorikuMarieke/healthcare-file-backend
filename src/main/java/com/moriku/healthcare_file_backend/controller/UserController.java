@@ -37,12 +37,6 @@ public class UserController {
         return userService.createUser(dto);
     }
 
-    @PostMapping("/auth/invite/accept")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void acceptInvite(@Valid @RequestBody UserInviteAcceptRequestDto dto) {
-        authService.acceptInvite(dto);
-    }
-
     @DeleteMapping("/{id}") //TODO: Maybe change to soft delete eventually
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteUser(@PathVariable Long id) {
