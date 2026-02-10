@@ -1,9 +1,8 @@
-package com.moriku.healthcare_file_backend.dto;
+package com.moriku.healthcare_file_backend.dto.client_profile;
 
-public class ClientProfileUpdateRequestDto {
+public class ClientProfileUpdateRequest {
     private String firstName;
     private String lastName;
-    private Boolean active;
 
     public String getFirstName() {
         return firstName;
@@ -21,11 +20,4 @@ public class ClientProfileUpdateRequestDto {
         this.lastName = lastName;
     }
 
-    public Boolean getActive() {
-        return active;
-    }
-
-    public void setActive(Boolean active) {
-        this.active = active;
-    }
 }

@@ -1,6 +1,6 @@
 package com.moriku.healthcare_file_backend.service;
 
-import com.moriku.healthcare_file_backend.dto.*;
+import com.moriku.healthcare_file_backend.dto.user.*;
 import com.moriku.healthcare_file_backend.mapper.UserMapper;
 import com.moriku.healthcare_file_backend.model.ClientProfile;
 import com.moriku.healthcare_file_backend.model.InviteToken;
@@ -45,7 +45,7 @@ public class AuthService {
     }
 
     @Transactional
-    public UserResponseDto registerClient(UserRegistrationRequestDto req) {
+    public UserResponse registerClient(UserRegistrationRequest req) {
 
         String email = req.getEmail().trim().toLowerCase();
         String bsn = req.getBsn().trim();
@@ -96,7 +96,7 @@ public class AuthService {
         return UserMapper.toResponse(saved);
     }
 
-    public UserLoginResponseDto login(UserLoginRequestDto request) {
+    public UserLoginResponse login(UserLoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
@@ -104,11 +104,11 @@ public class AuthService {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         String token = jwtUtil.generateToken(userDetails);
 
-        return new UserLoginResponseDto(token);
+        return new UserLoginResponse(token);
     }
 
     @Transactional
-    public void acceptInvite(String token, UserInviteAcceptRequestDto dto) {
+    public void acceptInvite(String token, UserInviteAcceptRequest dto) {
         InviteToken invite = inviteTokenRepository.findByToken(token)
             .orElseThrow(() -> new ResponseStatusException(
                 HttpStatus.BAD_REQUEST, "Invalid invite token"

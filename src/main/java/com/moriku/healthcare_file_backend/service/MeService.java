@@ -1,9 +1,9 @@
 package com.moriku.healthcare_file_backend.service;
 
-import com.moriku.healthcare_file_backend.dto.ClientProfileResponseDto;
-import com.moriku.healthcare_file_backend.dto.EmployeeProfileResponseDto;
-import com.moriku.healthcare_file_backend.dto.UserPasswordChangeRequestDto;
-import com.moriku.healthcare_file_backend.dto.UserResponseDto;
+import com.moriku.healthcare_file_backend.dto.client_profile.ClientProfileResponse;
+import com.moriku.healthcare_file_backend.dto.employee_profile.EmployeeProfileResponse;
+import com.moriku.healthcare_file_backend.dto.user.UserPasswordChangeRequest;
+import com.moriku.healthcare_file_backend.dto.user.UserResponse;
 import com.moriku.healthcare_file_backend.mapper.ClientProfileMapper;
 import com.moriku.healthcare_file_backend.mapper.EmployeeProfileMapper;
 import com.moriku.healthcare_file_backend.mapper.UserMapper;
@@ -42,12 +42,12 @@ public class MeService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public UserResponseDto getMe() {
+    public UserResponse getMe() {
         User user = getCurrentUserOrThrow();
         return UserMapper.toResponse(user);
     }
 
-    public ClientProfileResponseDto getMyClientProfile() {
+    public ClientProfileResponse getMyClientProfile() {
         User user = getCurrentUserOrThrow();
 
         if (!user.isClient()) {
@@ -60,7 +60,7 @@ public class MeService {
         return ClientProfileMapper.toResponse(profile);
     }
 
-    public EmployeeProfileResponseDto getMyEmployeeProfile() {
+    public EmployeeProfileResponse getMyEmployeeProfile() {
         User user = getCurrentUserOrThrow();
 
         if (!user.isEmployee() && !user.isAdmin()) {
@@ -86,7 +86,7 @@ public class MeService {
     }
 
     @Transactional
-    public void changeMyPassword(UserPasswordChangeRequestDto dto) {
+    public void changeMyPassword(UserPasswordChangeRequest dto) {
         User user = getCurrentUserOrThrow();
 
         if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {

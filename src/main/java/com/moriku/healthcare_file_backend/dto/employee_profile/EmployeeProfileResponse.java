@@ -1,6 +1,6 @@
-package com.moriku.healthcare_file_backend.dto;
+package com.moriku.healthcare_file_backend.dto.employee_profile;
 
-public class EmployeeProfileResponseDto {
+public class EmployeeProfileResponse {
 
     private final Long userId;
 
@@ -9,8 +9,8 @@ public class EmployeeProfileResponseDto {
     private final String personalPhoneNumber;
     private final String personalEmail;
 
-    public EmployeeProfileResponseDto(Long userId, String workEmail,
-                                      String workPhoneNumber, String personalPhoneNumber, String personalEmail) {
+    public EmployeeProfileResponse(Long userId, String workEmail,
+                                   String workPhoneNumber, String personalPhoneNumber, String personalEmail) {
         this.userId = userId;
         this.workEmail = workEmail;
         this.workPhoneNumber = workPhoneNumber;

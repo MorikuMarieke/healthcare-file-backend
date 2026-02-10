@@ -72,7 +72,11 @@ public class SecurityConfig {
             // If only staff should edit employee profiles:
             .requestMatchers(HttpMethod.PATCH, "/employee-profiles/**").hasAnyAuthority("ADMIN", "EMPLOYEE")
             .requestMatchers(HttpMethod.GET, "/employee-profiles/**").hasAnyAuthority("ADMIN", "EMPLOYEE")
+            .requestMatchers(HttpMethod.GET, "/me/client-profile").hasAuthority("CLIENT")
+            .requestMatchers(HttpMethod.GET, "/me/employee-profile").hasAnyAuthority("EMPLOYEE", "ADMIN")
+            .requestMatchers(HttpMethod.PATCH, "/me/password").authenticated()
             .requestMatchers("/me/**").authenticated()
+
 
 
             // ---- Everything else requires a valid token ----

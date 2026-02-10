@@ -1,8 +1,8 @@
-package com.moriku.healthcare_file_backend.dto;
+package com.moriku.healthcare_file_backend.dto.client_profile;
 
 import java.time.Instant;
 
-public class ClientProfileResponseDto {
+public class ClientProfileResponse {
 
     private final Long id;
     private final String bsn;
@@ -12,8 +12,8 @@ public class ClientProfileResponseDto {
     private final Instant createdAt;
     private final Long userId; // nullable -> can be null
 
-    public ClientProfileResponseDto(Long id, String bsn, String firstName, String lastName,
-                                    boolean active, Instant createdAt, Long userId) {
+    public ClientProfileResponse(Long id, String bsn, String firstName, String lastName,
+                                 boolean active, Instant createdAt, Long userId) {
         this.id = id;
         this.bsn = bsn;
         this.firstName = firstName;

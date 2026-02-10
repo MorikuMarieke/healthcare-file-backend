@@ -1,6 +1,9 @@
 package com.moriku.healthcare_file_backend.controller;
 
-import com.moriku.healthcare_file_backend.dto.*;
+import com.moriku.healthcare_file_backend.dto.user.UserCreateRequest;
+import com.moriku.healthcare_file_backend.dto.user.UserInviteResponse;
+import com.moriku.healthcare_file_backend.dto.user.UserPasswordResetResponse;
+import com.moriku.healthcare_file_backend.dto.user.UserResponse;
 import com.moriku.healthcare_file_backend.service.AuthService;
 import com.moriku.healthcare_file_backend.service.UserService;
 import jakarta.validation.Valid;
@@ -14,26 +17,24 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
-    private final AuthService authService;
 
-    public UserController(UserService userService, AuthService authService) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.authService = authService;
     }
 
     @GetMapping
-    public List<UserResponseDto> getAllUsers() {
+    public List<UserResponse> getAllUsers() {
         return userService.getAllUsers();
     }
 
     @GetMapping("/{id}")
-    public UserResponseDto getUserById(@PathVariable Long id) {
+    public UserResponse getUserById(@PathVariable Long id) {
         return userService.getUserById(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserInviteResponseDto createUser(@Valid @RequestBody UserCreateRequestDto dto) {
+    public UserInviteResponse createUser(@Valid @RequestBody UserCreateRequest dto) {
         return userService.createUser(dto);
     }
 
@@ -44,7 +45,7 @@ public class UserController {
     }
 
     @PostMapping("/{id}/reset-password")
-    public UserPasswordResetResponseDto resetPassword(@PathVariable Long id) {
+    public UserPasswordResetResponse resetPassword(@PathVariable Long id) {
         return userService.resetPassword(id);
     }
 }

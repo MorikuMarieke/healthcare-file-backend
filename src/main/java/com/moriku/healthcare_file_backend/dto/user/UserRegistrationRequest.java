@@ -1,10 +1,10 @@
-package com.moriku.healthcare_file_backend.dto;
+package com.moriku.healthcare_file_backend.dto.user;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
-public class UserRegistrationRequestDto {
+public class UserRegistrationRequest {
     @NotBlank
     @Pattern(regexp = "^\\d{9}$", message = "BSN must be exactly 9 digits")
     private String bsn;

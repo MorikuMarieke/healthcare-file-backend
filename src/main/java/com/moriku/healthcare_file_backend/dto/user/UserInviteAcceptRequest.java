@@ -1,11 +1,11 @@
-package com.moriku.healthcare_file_backend.dto;
+package com.moriku.healthcare_file_backend.dto.user;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-public class UserInviteAcceptRequestDto {
+public class UserInviteAcceptRequest {
 
     @NotBlank
     @Email
@@ -19,7 +19,7 @@ public class UserInviteAcceptRequestDto {
     )
     private String newPassword;
 
-    public UserInviteAcceptRequestDto() {}
+    public UserInviteAcceptRequest() {}
 
     public String getEmail() {
         return email;

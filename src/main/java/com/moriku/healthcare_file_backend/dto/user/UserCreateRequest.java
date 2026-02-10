@@ -1,10 +1,10 @@
-package com.moriku.healthcare_file_backend.dto;
+package com.moriku.healthcare_file_backend.dto.user;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
-public class UserCreateRequestDto {
+public class UserCreateRequest {
 
     @Email
     @NotBlank

@@ -1,6 +1,11 @@
 package com.moriku.healthcare_file_backend.service;
 
-import com.moriku.healthcare_file_backend.dto.*;
+import com.moriku.healthcare_file_backend.dto.user.UserCreateRequest;
+import com.moriku.healthcare_file_backend.dto.user.UserInviteResponse;
+import com.moriku.healthcare_file_backend.dto.user.UserPasswordResetResponse;
+import com.moriku.healthcare_file_backend.dto.user.UserResponse;
+import com.moriku.healthcare_file_backend.exception.BadRequestException;
+import com.moriku.healthcare_file_backend.exception.ConflictException;
 import com.moriku.healthcare_file_backend.mapper.UserMapper;
 import com.moriku.healthcare_file_backend.model.EmployeeProfile;
 import com.moriku.healthcare_file_backend.model.InviteToken;
@@ -38,13 +43,13 @@ public class UserService {
         this.inviteTokenRepository = inviteTokenRepository;
     }
 
-    public List<UserResponseDto> getAllUsers() {
+    public List<UserResponse> getAllUsers() {
         return userRepository.findAll().stream()
             .map(UserMapper::toResponse)
             .toList();
     }
 
-    public UserResponseDto getUserById(Long id) {
+    public UserResponse getUserById(Long id) {
         User user = userRepository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with id: " + id));
         return UserMapper.toResponse(user);
@@ -55,33 +60,34 @@ public class UserService {
     }
 
     @Transactional
-    public UserInviteResponseDto createUser(UserCreateRequestDto dto) {
+    public UserInviteResponse createUser(UserCreateRequest dto) {
 
-        if (userRepository.existsByEmail(dto.getEmail())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
+        String email = dto.getEmail().trim().toLowerCase();
+
+        if (userRepository.existsByEmail(email)) {
+            throw new ConflictException("Email already exists: " + email);
         }
 
         String roleName = dto.getRole();
 
         if (!"ADMIN".equals(roleName) && !"EMPLOYEE".equals(roleName)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Role must be ADMIN or EMPLOYEE");
+            throw new BadRequestException("Role must be ADMIN or EMPLOYEE");
         }
 
         Role role = roleRepository.findByName(roleName)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Role not found: " + roleName));
+            .orElseThrow(() -> new BadRequestException("Role not found: " + roleName));
 
         User user = UserMapper.toStaffEntity(dto, role);
+
+        // placeholder password: user cannot login until invite accept sets real password
         user.setPassword(passwordEncoder.encode(java.util.UUID.randomUUID().toString()));
         user.setPasswordChangedAt(null);
 
-        // Build profile BEFORE save, link both sides
         EmployeeProfile profile = UserMapper.toEmployeeProfile(dto);
+        user.setEmployeeProfile(profile);
+        profile.setUser(user);
 
-        // IMPORTANT: set both sides (pick ONE approach)
-        user.setEmployeeProfile(profile);  // User side
-        profile.setUser(user);             // EmployeeProfile side (owning side)
-
-        User saved = userRepository.save(user); // cascades profile persist
+        User saved = userRepository.save(user);
 
         InviteToken invite = new InviteToken();
         invite.setToken(java.util.UUID.randomUUID().toString());
@@ -89,13 +95,15 @@ public class UserService {
         invite.setExpiresAt(Instant.now().plus(1, java.time.temporal.ChronoUnit.DAYS));
         inviteTokenRepository.save(invite);
 
-        String inviteUrl = "/auth/invite/accept?token=" + invite.getToken();
+        String inviteToken = invite.getToken();
 
-        return new UserInviteResponseDto(saved.getId(), saved.getEmail(), roleName, inviteUrl);
+        String inviteUrl = "http://localhost:8080/auth/invite/accept?token=" + inviteToken;
+
+        return UserMapper.toInviteResponse(saved, inviteToken, inviteUrl);
     }
 
     @Transactional //TODO: Consider adding user.setPasswordChangedAt(null); with this method, but this also needs to be added to CustomUserDetailsService so null will be treated as expired. This could also be used in maybe creation of user, but I'll consider.
-    public UserPasswordResetResponseDto resetPassword(Long id) {
+    public UserPasswordResetResponse resetPassword(Long id) {
         User user = userRepository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with id: " + id));
 
@@ -107,7 +115,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(tempPassword));
         user.setPasswordChangedAt(Instant.now());
 
-        return new UserPasswordResetResponseDto(user.getId(), tempPassword);
+        return new UserPasswordResetResponse(user.getId(), tempPassword);
     }
 
     public void deleteUser(Long id) {

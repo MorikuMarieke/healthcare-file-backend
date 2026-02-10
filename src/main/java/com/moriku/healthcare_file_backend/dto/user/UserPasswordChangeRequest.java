@@ -1,10 +1,10 @@
-package com.moriku.healthcare_file_backend.dto;
+package com.moriku.healthcare_file_backend.dto.user;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-public class UserPasswordChangeRequestDto {
+public class UserPasswordChangeRequest {
 
     @NotBlank
     private String currentPassword;

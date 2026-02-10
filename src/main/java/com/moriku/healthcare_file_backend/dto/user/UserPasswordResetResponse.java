@@ -1,13 +1,13 @@
-package com.moriku.healthcare_file_backend.dto;
+package com.moriku.healthcare_file_backend.dto.user;
 
-public class UserPasswordResetResponseDto {
+public class UserPasswordResetResponse {
 
     private Long userId;
     private String temporaryPassword;
 
-    public UserPasswordResetResponseDto() {}
+    public UserPasswordResetResponse() {}
 
-    public UserPasswordResetResponseDto(Long userId, String temporaryPassword) {
+    public UserPasswordResetResponse(Long userId, String temporaryPassword) {
         this.userId = userId;
         this.temporaryPassword = temporaryPassword;
     }

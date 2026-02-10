@@ -1,8 +1,8 @@
-package com.moriku.healthcare_file_backend.dto;
+package com.moriku.healthcare_file_backend.dto.employee_profile;
 
 import jakarta.validation.constraints.Email;
 
-public class EmployeeProfileUpdateRequestDto {
+public class EmployeeProfileUpdateRequest {
 
     private String workPhoneNumber;
     private String personalPhoneNumber;
