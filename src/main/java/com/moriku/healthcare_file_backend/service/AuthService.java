@@ -1,16 +1,27 @@
 package com.moriku.healthcare_file_backend.service;
 
-import com.moriku.healthcare_file_backend.dto.UserRegistrationRequestDto;
-import com.moriku.healthcare_file_backend.dto.UserResponseDto;
+import com.moriku.healthcare_file_backend.dto.*;
 import com.moriku.healthcare_file_backend.mapper.UserMapper;
 import com.moriku.healthcare_file_backend.model.ClientProfile;
+import com.moriku.healthcare_file_backend.model.InviteToken;
 import com.moriku.healthcare_file_backend.model.Role;
 import com.moriku.healthcare_file_backend.model.User;
 import com.moriku.healthcare_file_backend.repository.ClientProfileRepository;
+import com.moriku.healthcare_file_backend.repository.InviteTokenRepository;
 import com.moriku.healthcare_file_backend.repository.RoleRepository;
 import com.moriku.healthcare_file_backend.repository.UserRepository;
+import com.moriku.healthcare_file_backend.security.JwtUtil;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.time.Instant;
 
 @Service
 public class AuthService {
@@ -19,55 +30,108 @@ public class AuthService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final ClientProfileRepository clientProfileRepository;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
+    private final InviteTokenRepository inviteTokenRepository;
 
-    public AuthService(UserRepository userRepository,
-                       RoleRepository roleRepository,
-                       PasswordEncoder passwordEncoder,
-                       ClientProfileRepository clientProfileRepository) {
+    public AuthService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, ClientProfileRepository clientProfileRepository, AuthenticationManager authenticationManager, JwtUtil jwtUtil, InviteTokenRepository inviteTokenRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.clientProfileRepository = clientProfileRepository;
+        this.authenticationManager = authenticationManager;
+        this.jwtUtil = jwtUtil;
+        this.inviteTokenRepository = inviteTokenRepository;
     }
 
+    @Transactional
     public UserResponseDto registerClient(UserRegistrationRequestDto req) {
 
-        if (userRepository.existsByEmail(req.getEmail())) {
-            throw new IllegalArgumentException("Email already exists");
+        String email = req.getEmail().trim().toLowerCase();
+        String bsn = req.getBsn().trim();
+
+        if (userRepository.existsByEmail(email)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
         }
 
-        ClientProfile profile = clientProfileRepository.findByBsn(req.getBsn().trim())
-            .orElseThrow(() -> new IllegalArgumentException("ClientProfile not found for BSN: " + req.getBsn()));
+        ClientProfile profile = clientProfileRepository.findByBsn(bsn)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "ClientProfile not found for BSN: " + bsn
+            ));
 
         if (profile.getUser() != null) {
-            throw new IllegalArgumentException("This client file already has an account");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This client file already has an account");
         }
 
-        // Require contact email to be set on the client file before allowing registration
-        if (profile.getContactDetails() == null ||
-            profile.getContactDetails().getEmail() == null ||
-            profile.getContactDetails().getEmail().isBlank()) {
-            throw new IllegalArgumentException("Contact email is not set for this client file");
+        if (profile.getContactDetails() == null
+            || profile.getContactDetails().getEmail() == null
+            || profile.getContactDetails().getEmail().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Contact email is not set for this client file");
         }
 
         String expectedEmail = profile.getContactDetails().getEmail().trim().toLowerCase();
-        String providedEmail = req.getEmail().trim().toLowerCase();
 
-        if (!expectedEmail.equals(providedEmail)) {
-            throw new IllegalArgumentException("Email does not match our records");
+        if (!expectedEmail.equals(email)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email does not match our records");
         }
 
         Role clientRole = roleRepository.findByName("CLIENT")
-            .orElseThrow(() -> new IllegalStateException("CLIENT role not found. Check data.sql seeding."));
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "CLIENT role not found. Check data.sql seeding."
+            ));
 
         String encodedPassword = passwordEncoder.encode(req.getPassword());
 
         User user = UserMapper.toEntity(req, clientRole, encodedPassword);
+        user.setPasswordChangedAt(Instant.now());
+
         User saved = userRepository.save(user);
 
         profile.setUser(saved);
-        clientProfileRepository.save(profile);
+        // inside @Transactional this is optional if profile is managed
+        // clientProfileRepository.save(profile);
 
         return UserMapper.toResponse(saved);
     }
+
+    public UserLoginResponseDto login(UserLoginRequestDto request) {
+        Authentication authentication = authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+        );
+
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String token = jwtUtil.generateToken(userDetails);
+
+        return new UserLoginResponseDto(token);
+    }
+
+    @Transactional
+    public void acceptInvite(String token, UserInviteAcceptRequestDto dto) {
+        InviteToken invite = inviteTokenRepository.findByToken(token)
+            .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "Invalid invite token"
+            ));
+
+        if (invite.isUsed() || invite.isExpired()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "Invite token expired or already used"
+            );
+        }
+
+        User user = invite.getUser();
+
+        if (!user.getEmail().equalsIgnoreCase(dto.getEmail())) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "Email does not match invite"
+            );
+        }
+
+        user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        user.setPasswordChangedAt(Instant.now());
+
+        invite.setUsedAt(Instant.now());
+    }
+
 }

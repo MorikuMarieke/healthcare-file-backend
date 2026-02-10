@@ -19,14 +19,17 @@ public class User {
     private String password;
 
     @Column(nullable = false)
-    private boolean mustChangePassword = true;
-
-    @Column(nullable = false)
     private Instant createdAt;
 
     @ManyToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
+
+    @Column(nullable = false)
+    private Instant passwordChangedAt;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private EmployeeProfile employeeProfile;
 
     public User() {}
 
@@ -38,7 +41,9 @@ public class User {
 
     @PrePersist
     void onCreate() {
-        this.createdAt = Instant.now();
+        Instant now = Instant.now();
+        this.createdAt = now;
+        this.passwordChangedAt = now;
     }
 
     public Long getId() {
@@ -70,14 +75,6 @@ public class User {
         this.role = role;
     }
 
-    public boolean isMustChangePassword() {
-        return mustChangePassword;
-    }
-
-    public void setMustChangePassword(boolean mustChangePassword) {
-        this.mustChangePassword = mustChangePassword;
-    }
-
     // helpers
 
     // if (user.isAdmin()) { ... }
@@ -99,6 +96,27 @@ public class User {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public Instant getPasswordChangedAt() {
+        return passwordChangedAt;
+    }
+
+    public void setPasswordChangedAt(Instant passwordChangedAt) {
+        this.passwordChangedAt = passwordChangedAt;
+    }
+
+    public EmployeeProfile getEmployeeProfile() {
+        return employeeProfile;
+    }
+
+
+    public void setEmployeeProfile(EmployeeProfile employeeProfile) {
+        this.employeeProfile = employeeProfile;
+
+        if (employeeProfile != null) {
+            employeeProfile.setUser(this);
+        }
     }
 }
 

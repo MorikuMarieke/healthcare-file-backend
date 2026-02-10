@@ -30,9 +30,4 @@ public class EmployeeProfileController {
         return employeeProfileService.patchEmployeeProfile(userId, request);
     }
 
-    @DeleteMapping("/{userId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteEmployeeProfile(@PathVariable Long userId) {
-        employeeProfileService.deleteEmployeeProfile(userId);
-    }
 }

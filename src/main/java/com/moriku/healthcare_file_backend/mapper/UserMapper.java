@@ -8,27 +8,27 @@ import com.moriku.healthcare_file_backend.model.EmployeeProfile;
 import com.moriku.healthcare_file_backend.model.Role;
 import com.moriku.healthcare_file_backend.model.User;
 
+import java.time.Instant;
+
 public final class UserMapper {
 
     private UserMapper() {
     }
 
     // Registration Request -> User entity (account-only)
-    public static User toEntity(UserRegistrationRequestDto req, Role role, String encodedPassword) {
+    public static User toEntity(UserRegistrationRequestDto dto, Role role, String encodedPassword) {
         User user = new User();
-        user.setEmail(req.getEmail());
+        user.setEmail(dto.getEmail().trim().toLowerCase());
         user.setPassword(encodedPassword);
         user.setRole(role);
-        user.setMustChangePassword(false); // registration sets a real password
+        user.setPasswordChangedAt(Instant.now());
         return user;
     }
-
-    public static User toEntity(UserCreateRequestDto req, Role role, String encodedPassword) {
+    //Create Request -> For staff User entity
+    public static User toStaffEntity(UserCreateRequestDto dto, Role role) {
         User user = new User();
-        user.setEmail(req.getEmail());
-        user.setPassword(encodedPassword);
+        user.setEmail(dto.getEmail().trim().toLowerCase());
         user.setRole(role);
-        user.setMustChangePassword(true); // staff created -> temp password
         return user;
     }
 
@@ -38,9 +38,8 @@ public final class UserMapper {
             user.getId(),
             user.getEmail(),
             user.getRole().getName(),
-            user.isMustChangePassword(),
             user.getCreatedAt()
-        );
+            );
     }
 
     // Entity -> Create Response DTO (account-only + temp password)
@@ -50,21 +49,19 @@ public final class UserMapper {
             user.getEmail(),
             user.getRole().getName(),
             temporaryPassword,
-            user.isMustChangePassword(),
             profile.getFirstName(),
-            profile.getLastName()
+            profile.getLastName(),
+            user.getCreatedAt()
         );
     }
 
-    public static EmployeeProfile toEmployeeProfile(UserCreateRequestDto req, User savedUser) {
+    public static EmployeeProfile toEmployeeProfile(UserCreateRequestDto dto) {
         EmployeeProfile profile = new EmployeeProfile();
-        profile.setUser(savedUser);
-        profile.setFirstName(req.getFirstName());
-        profile.setLastName(req.getLastName());
-
-        if (req.getWorkPhoneNumber() != null) profile.setWorkPhoneNumber(req.getWorkPhoneNumber());
-        if (req.getPersonalPhoneNumber() != null) profile.setPersonalPhoneNumber(req.getPersonalPhoneNumber());
-        if (req.getPersonalEmail() != null) profile.setPersonalEmail(req.getPersonalEmail());
+        profile.setFirstName(dto.getFirstName());
+        profile.setLastName(dto.getLastName());
+        if (dto.getWorkPhoneNumber() != null) profile.setWorkPhoneNumber(dto.getWorkPhoneNumber());
+        if (dto.getPersonalPhoneNumber() != null) profile.setPersonalPhoneNumber(dto.getPersonalPhoneNumber());
+        if (dto.getPersonalEmail() != null) profile.setPersonalEmail(dto.getPersonalEmail());
 
         return profile;
     }
