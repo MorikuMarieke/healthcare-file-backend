@@ -4,7 +4,6 @@ import com.moriku.healthcare_file_backend.dto.user.UserCreateRequest;
 import com.moriku.healthcare_file_backend.dto.user.UserInviteResponse;
 import com.moriku.healthcare_file_backend.dto.user.UserPasswordResetResponse;
 import com.moriku.healthcare_file_backend.dto.user.UserResponse;
-import com.moriku.healthcare_file_backend.service.AuthService;
 import com.moriku.healthcare_file_backend.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -41,7 +40,7 @@ public class UserController {
     @DeleteMapping("/{id}") //TODO: Maybe change to soft delete eventually
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
+        userService.deleteEmployeeUser(id);
     }
 
     @PostMapping("/{id}/reset-password")

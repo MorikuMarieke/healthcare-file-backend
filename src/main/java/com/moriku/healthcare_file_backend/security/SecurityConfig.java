@@ -77,7 +77,11 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.PATCH, "/me/password").authenticated()
             .requestMatchers("/me/**").authenticated()
 
-
+            // ---- Care teams ----
+            .requestMatchers(HttpMethod.POST, "/care-teams/**").hasAuthority("ADMIN")
+            .requestMatchers(HttpMethod.PUT, "/care-teams/**").hasAuthority("ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/care-teams/**").hasAuthority("ADMIN")
+            .requestMatchers(HttpMethod.GET, "/care-teams/**").hasAnyAuthority("ADMIN", "EMPLOYEE")
 
             // ---- Everything else requires a valid token ----
             .anyRequest().authenticated()

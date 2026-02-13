@@ -11,10 +11,7 @@ import com.moriku.healthcare_file_backend.model.EmployeeProfile;
 import com.moriku.healthcare_file_backend.model.InviteToken;
 import com.moriku.healthcare_file_backend.model.Role;
 import com.moriku.healthcare_file_backend.model.User;
-import com.moriku.healthcare_file_backend.repository.EmployeeProfileRepository;
-import com.moriku.healthcare_file_backend.repository.InviteTokenRepository;
-import com.moriku.healthcare_file_backend.repository.RoleRepository;
-import com.moriku.healthcare_file_backend.repository.UserRepository;
+import com.moriku.healthcare_file_backend.repository.*;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -32,15 +29,21 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final InviteTokenRepository inviteTokenRepository;
+    private final EmployeeProfileRepository employeeProfileRepository;
+    private final ClientAssignmentRepository clientAssignmentRepository;
 
     public UserService(UserRepository userRepository,
                        RoleRepository roleRepository,
                        PasswordEncoder passwordEncoder,
-                       EmployeeProfileRepository employeeProfileRepository, InviteTokenRepository inviteTokenRepository) {
+                       InviteTokenRepository inviteTokenRepository,
+                       EmployeeProfileRepository employeeProfileRepository,
+                       ClientAssignmentRepository clientAssignmentRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.inviteTokenRepository = inviteTokenRepository;
+        this.employeeProfileRepository = employeeProfileRepository;
+        this.clientAssignmentRepository = clientAssignmentRepository;
     }
 
     public List<UserResponse> getAllUsers() {
@@ -102,7 +105,8 @@ public class UserService {
         return UserMapper.toInviteResponse(saved, inviteToken, inviteUrl);
     }
 
-    @Transactional //TODO: Consider adding user.setPasswordChangedAt(null); with this method, but this also needs to be added to CustomUserDetailsService so null will be treated as expired. This could also be used in maybe creation of user, but I'll consider.
+    @Transactional
+    //TODO: Consider adding user.setPasswordChangedAt(null); with this method, but this also needs to be added to CustomUserDetailsService so null will be treated as expired. This could also be used in maybe creation of user, but I'll consider.
     public UserPasswordResetResponse resetPassword(Long id) {
         User user = userRepository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with id: " + id));
@@ -118,14 +122,27 @@ public class UserService {
         return new UserPasswordResetResponse(user.getId(), tempPassword);
     }
 
-    public void deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with id: " + id);
-        }
-        userRepository.deleteById(id);
-    }
-
     private String generateTempPassword() {
         return java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 12);
     }
+
+    @Transactional
+    public void deleteEmployeeUser(Long userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (!user.isEmployee()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User is not an EMPLOYEE");
+        }
+
+        inviteTokenRepository.deleteAllByUser_Id(userId);
+
+        employeeProfileRepository.findById(userId).ifPresent(employeeProfile ->
+            clientAssignmentRepository.deleteAllByEmployeeProfileId(employeeProfile.getId())
+        );
+
+        userRepository.delete(user);
+    }
+
+
 }
