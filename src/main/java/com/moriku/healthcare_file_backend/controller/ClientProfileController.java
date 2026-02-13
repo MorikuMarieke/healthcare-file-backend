@@ -60,6 +60,7 @@ public class ClientProfileController {
                                        @Valid @RequestBody ClientProfileStatusRequest request) {
         clientProfileService.setClientProfileActive(id, request);
     }
-
-
+//
+//    @GetMapping("/id/contact-details")
+//    public
 }
