@@ -3,7 +3,15 @@ package com.moriku.healthcare_file_backend.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "care_teams")
+@Table(
+    name = "care_teams",
+    uniqueConstraints = {
+        @UniqueConstraint(name = "uk_care_team_email", columnNames = "team_email"),
+        @UniqueConstraint(name = "uk_care_team_phone", columnNames = "team_phone_number"),
+        @UniqueConstraint(name = "uk_care_team_name", columnNames = "team_name")
+    }
+)
+
 public class CareTeam {
 
     @Id

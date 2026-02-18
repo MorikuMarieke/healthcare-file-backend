@@ -4,6 +4,8 @@ import com.moriku.healthcare_file_backend.dto.careteam.CareTeamRequest;
 import com.moriku.healthcare_file_backend.dto.careteam.CareTeamResponse;
 import com.moriku.healthcare_file_backend.service.CareTeamService;
 import java.util.List;
+
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,10 +22,14 @@ public class CareTeamController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CareTeamResponse create(@RequestBody CareTeamRequest request) {
+    public CareTeamResponse create(@RequestBody @Valid CareTeamRequest req) {
+
         System.out.println("CREATE CARE TEAM called");
-        return careTeamService.createCareTeam(request);
+
+        return careTeamService.createCareTeam(req);
     }
+
+
 
     @GetMapping("/{id}")
     public CareTeamResponse getById(@PathVariable Long id) {

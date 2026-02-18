@@ -2,6 +2,7 @@ package com.moriku.healthcare_file_backend.service;
 
 import com.moriku.healthcare_file_backend.dto.careteam.CareTeamRequest;
 import com.moriku.healthcare_file_backend.dto.careteam.CareTeamResponse;
+import com.moriku.healthcare_file_backend.exception.ConflictException;
 import com.moriku.healthcare_file_backend.mapper.CareTeamMapper;
 import com.moriku.healthcare_file_backend.model.CareTeam;
 import com.moriku.healthcare_file_backend.repository.CareTeamRepository;
@@ -32,9 +33,20 @@ public class CareTeamService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "All fields are required");
         }
 
+        if (careTeamRepository.existsByTeamNameIgnoreCase(request.getTeamName())) {
+            throw new ConflictException("teamName is already in use");
+        }
+        if (careTeamRepository.existsByTeamEmailIgnoreCase(request.getTeamEmail())) {
+            throw new ConflictException("teamEmail is already in use");
+        }
+        if (careTeamRepository.existsByTeamPhoneNumber(request.getTeamPhoneNumber())) {
+            throw new ConflictException("teamPhoneNumber is already in use");
+        }
+
         CareTeam saved = careTeamRepository.save(CareTeamMapper.toEntity(request));
         return CareTeamMapper.toResponse(saved);
     }
+
 
     public CareTeamResponse getCareTeam(Long id) {
         CareTeam team = careTeamRepository.findById(id)

@@ -1,12 +1,12 @@
 package com.moriku.healthcare_file_backend.exception;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import java.util.stream.Collectors;
+import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -28,6 +28,16 @@ public class GlobalExceptionHandler {
     public String handleConflict(ConflictException ex) {
         return ex.getMessage();
     }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleDataIntegrity(DataIntegrityViolationException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+            "error", "CONFLICT",
+            "message", "Duplicate value. One of the unique fields is already in use."
+        ));
+    }
+
+
 
     // Optional but recommended: bean validation errors (@Valid)
 //    @ExceptionHandler(MethodArgumentNotValidException.class)
