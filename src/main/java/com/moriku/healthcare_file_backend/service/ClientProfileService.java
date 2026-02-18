@@ -96,11 +96,20 @@ public class ClientProfileService {
         ClientProfile profile = clientProfileRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("ClientProfile not found with id: " + id));
 
-        if (req.getFirstName() != null) {
+        if (req.getFirstName() != null && !req.getFirstName().isBlank()) {
             profile.setFirstName(req.getFirstName().trim());
         }
-        if (req.getLastName() != null) {
+
+        if (req.getLastName() != null && !req.getLastName().isBlank()) {
             profile.setLastName(req.getLastName().trim());
+        }
+
+        if (req.getSex() != null) {
+            profile.setSex(req.getSex());
+        }
+
+        if (req.getBirthDate() != null) {
+            profile.setBirthDate(req.getBirthDate());
         }
 
         return ClientProfileMapper.toResponse(profile);

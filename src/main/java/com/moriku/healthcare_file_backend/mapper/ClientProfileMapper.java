@@ -13,9 +13,12 @@ public final class ClientProfileMapper {
         profile.setBsn(req.getBsn().trim());
         profile.setFirstName(req.getFirstName().trim());
         profile.setLastName(req.getLastName().trim());
+        profile.setSex(req.getSex());
+        profile.setBirthDate(req.getBirthDate());
         profile.setActive(true);
         return profile;
     }
+
 
     public static ClientProfileResponse toResponse(ClientProfile profile) {
         Long userId = profile.getUser() != null ? profile.getUser().getId() : null;
@@ -25,9 +28,11 @@ public final class ClientProfileMapper {
             profile.getBsn(),
             profile.getFirstName(),
             profile.getLastName(),
+            profile.getSex(),
+            profile.getBirthDate(),
             profile.isActive(),
             profile.getCreatedAt(),
             userId
-        );
+            );
     }
 }
