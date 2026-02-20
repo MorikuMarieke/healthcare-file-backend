@@ -42,6 +42,9 @@ public class ClientProfile {
     @OneToOne(mappedBy = "clientProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private ContactDetails contactDetails;
 
+    @OneToOne(mappedBy = "clientProfile", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private CarePlan carePlan;
+
     public ClientProfile() {
     }
 

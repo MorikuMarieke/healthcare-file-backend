@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface CarePlanRepository extends JpaRepository<CarePlan, Long> {
     Optional<CarePlan> findByClientProfileId(Long clientProfileId);
+    boolean existsByClientProfileId(Long clientProfileId);
 }

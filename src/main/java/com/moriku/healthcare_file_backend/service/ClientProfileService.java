@@ -8,15 +8,19 @@ import com.moriku.healthcare_file_backend.exception.BadRequestException;
 import com.moriku.healthcare_file_backend.exception.ConflictException;
 import com.moriku.healthcare_file_backend.exception.ResourceNotFoundException;
 import com.moriku.healthcare_file_backend.mapper.ClientProfileMapper;
+import com.moriku.healthcare_file_backend.model.CarePlan;
 import com.moriku.healthcare_file_backend.model.ClientProfile;
 import com.moriku.healthcare_file_backend.model.ContactDetails;
 import com.moriku.healthcare_file_backend.model.User;
+import com.moriku.healthcare_file_backend.repository.CarePlanRepository;
 import com.moriku.healthcare_file_backend.repository.ClientProfileRepository;
 import com.moriku.healthcare_file_backend.repository.UserRepository;
 import com.moriku.healthcare_file_backend.security.SecurityUtils;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -26,10 +30,12 @@ public class ClientProfileService {
 
     private final ClientProfileRepository clientProfileRepository;
     private final UserRepository userRepository;
+    private final CarePlanRepository carePlanRepository;
 
-    public ClientProfileService(ClientProfileRepository clientProfileRepository, UserRepository userRepository) {
+    public ClientProfileService(ClientProfileRepository clientProfileRepository, UserRepository userRepository, CarePlanRepository carePlanRepository) {
         this.clientProfileRepository = clientProfileRepository;
         this.userRepository = userRepository;
+        this.carePlanRepository = carePlanRepository;
     }
 
     @Transactional
@@ -46,7 +52,15 @@ public class ClientProfileService {
         details.setClientProfile(profile);
         profile.setContactDetails(details);
 
+        // 1) save client first -> we now have an id
         ClientProfile saved = clientProfileRepository.save(profile);
+
+        // 2) create care plan for this client (notes empty, createdAt via @PrePersist)
+        CarePlan plan = new CarePlan();
+        plan.setClientProfile(saved);
+        plan.setNotes("");
+        carePlanRepository.save(plan);
+
         return ClientProfileMapper.toResponse(saved);
     }
 
@@ -55,6 +69,7 @@ public class ClientProfileService {
      * omdat je (nog) geen UnauthorizedException hebt.
      * Als je security /me/** al op authenticated hebt staan, komt dit bijna nooit voor.
      */
+
     private User getCurrentUserOrThrow() {
         String email = SecurityUtils.getCurrentEmail();
 
