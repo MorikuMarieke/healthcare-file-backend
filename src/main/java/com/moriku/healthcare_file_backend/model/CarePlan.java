@@ -2,7 +2,7 @@ package com.moriku.healthcare_file_backend.model;
 
 import jakarta.persistence.*;
 
-import java.time.Instant;
+import java.util.List;
 
 @Entity
 @Table(name = "care_plans",
@@ -20,11 +20,11 @@ public class CarePlan {
     @JoinColumn(name = "client_profile_id", nullable = false, unique = true)
     private ClientProfile clientProfile;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
-
     @Column(nullable = false, length = 2000)
     private String notes = "";
+
+    @OneToMany(mappedBy = "carePlan", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Goal> goals = new java.util.ArrayList<>();
 
     public CarePlan() {
     }
@@ -33,9 +33,14 @@ public class CarePlan {
         this.clientProfile = clientProfile;
     }
 
-    @PrePersist
-    void prePersist() {
-        this.createdAt = Instant.now();
+    public void addGoal(Goal goal) {
+        goals.add(goal);
+        goal.setCarePlan(this);
+    }
+
+    public void removeGoal(Goal goal) {
+        goals.remove(goal);
+        goal.setCarePlan(null);
     }
 
     public Long getId() {
@@ -44,10 +49,6 @@ public class CarePlan {
 
     public ClientProfile getClientProfile() {
         return clientProfile;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
     }
 
     public void setClientProfile(ClientProfile clientProfile) {
@@ -60,5 +61,9 @@ public class CarePlan {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public List<Goal> getGoals() {
+        return goals;
     }
 }

@@ -85,6 +85,21 @@ public class MeService {
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
     }
 
+    public Long getMyEmployeeId() {
+        User user = getCurrentUserOrThrow();
+
+        if (!user.isEmployee() && !user.isAdmin()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only EMPLOYEE/ADMIN can perform this action");
+        }
+
+        boolean exists = employeeProfileRepository.existsById(user.getId());
+        if (!exists) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee profile not found");
+        }
+
+        return user.getId();
+    }
+
     @Transactional
     public void changeMyPassword(UserPasswordChangeRequest dto) {
         User user = getCurrentUserOrThrow();
