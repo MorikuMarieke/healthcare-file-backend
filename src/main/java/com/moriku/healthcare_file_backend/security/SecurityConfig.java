@@ -41,60 +41,96 @@ public class SecurityConfig {
 
         http.authorizeHttpRequests(auth -> auth
 
-                // ---- Public auth endpoints ----
-                .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-                .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
-                .requestMatchers(HttpMethod.POST, "/auth/invite/accept").permitAll()
+            // ---- Public auth endpoints ----
+            .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+            .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
+            .requestMatchers(HttpMethod.POST, "/auth/invite/accept").permitAll()
 
-                // ---- Users (staff accounts) ----
-                // POST /users -> ADMIN creates EMPLOYEE or ADMIN
-                .requestMatchers(HttpMethod.POST, "/users").hasAuthority("ADMIN")
+            // ---- Users (ADMIN only) ----
+            .requestMatchers(HttpMethod.POST, "/users").hasAuthority("ADMIN")
+            .requestMatchers(HttpMethod.GET, "/users/**").hasAuthority("ADMIN")
+            .requestMatchers(HttpMethod.PATCH, "/users/**").hasAuthority("ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/users/**").hasAuthority("ADMIN")
 
-                // Optional: user management endpoints
-                .requestMatchers(HttpMethod.GET, "/users/**").hasAuthority("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/users/**").hasAuthority("ADMIN")
-                .requestMatchers(HttpMethod.PATCH, "/users/**").hasAuthority("ADMIN")
+            // =====================================================
+            // SUBRESOURCES FIRST (most specific paths)
+            // =====================================================
 
-                // ---- Client profiles (dossiers) ----
-                // staff creates client file
-                .requestMatchers(HttpMethod.POST, "/client-profiles").hasAnyAuthority("ADMIN", "EMPLOYEE")
+            // ---- Care plan via client profile ----
+            .requestMatchers(HttpMethod.GET, "/client-profiles/*/care-plan")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
 
-                // staff updates client file or contact email
-                .requestMatchers(HttpMethod.PATCH, "/client-profiles/**").hasAnyAuthority("ADMIN", "EMPLOYEE")
+            .requestMatchers(HttpMethod.PATCH, "/client-profiles/*/care-plan")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
 
-                // staff can view client files (choose your preference)
-                .requestMatchers(HttpMethod.GET, "/client-profiles/**").hasAnyAuthority("ADMIN", "EMPLOYEE")
+            // ---- Goals via client profile ----
+            .requestMatchers(HttpMethod.POST, "/client-profiles/*/care-plan/goals")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
 
-                // staff deletes client files (usually ADMIN only)
-                .requestMatchers(HttpMethod.DELETE, "/client-profiles/**").hasAuthority("ADMIN")
+            .requestMatchers(HttpMethod.GET, "/client-profiles/*/care-plan/goals/**")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
 
-                // ---- Employee profiles ----
-                // If only staff should edit employee profiles:
-                .requestMatchers(HttpMethod.PATCH, "/employee-profiles/**").hasAnyAuthority("ADMIN", "EMPLOYEE")
-                .requestMatchers(HttpMethod.GET, "/employee-profiles/**").hasAnyAuthority("ADMIN", "EMPLOYEE")
-                .requestMatchers(HttpMethod.GET, "/me/client-profile").hasAuthority("CLIENT")
-                .requestMatchers(HttpMethod.GET, "/me/employee-profile").hasAnyAuthority("EMPLOYEE", "ADMIN")
-                .requestMatchers(HttpMethod.PATCH, "/me/password").authenticated()
-                .requestMatchers("/me/**").authenticated()
+            .requestMatchers(HttpMethod.PUT, "/client-profiles/*/care-plan/goals/*")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
 
-                // ---- Care teams ----
-                .requestMatchers(HttpMethod.POST, "/care-teams/**").hasAuthority("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/care-teams/**").hasAuthority("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/care-teams/**").hasAuthority("ADMIN")
-                .requestMatchers(HttpMethod.GET, "/care-teams/**").hasAnyAuthority("ADMIN", "EMPLOYEE")
+            .requestMatchers(HttpMethod.DELETE, "/client-profiles/*/care-plan/goals/*")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
 
-                // ---- Care plans (container) ----
-                .requestMatchers(HttpMethod.GET, "/care-plans/client/*").hasAnyAuthority("ADMIN", "EMPLOYEE")
-                .requestMatchers(HttpMethod.PATCH, "/care-plans/*").hasAnyAuthority("ADMIN", "EMPLOYEE")
+            // =====================================================
+            // ROOT RESOURCES AFTER SUBRESOURCES
+            // =====================================================
 
-                // ---- Goals (nested) ----
-                .requestMatchers(HttpMethod.POST, "/care-plans/*/goals").hasAnyAuthority("ADMIN", "EMPLOYEE")
-                .requestMatchers(HttpMethod.GET, "/care-plans/*/goals/**").hasAnyAuthority("ADMIN", "EMPLOYEE")
-                .requestMatchers(HttpMethod.PUT, "/care-plans/*/goals/*").hasAnyAuthority("ADMIN", "EMPLOYEE")
-                .requestMatchers(HttpMethod.DELETE, "/care-plans/*/goals/*").hasAnyAuthority("ADMIN", "EMPLOYEE")
+            // ---- Client profiles ----
+            .requestMatchers(HttpMethod.POST, "/client-profiles")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
 
-                // ---- Everything else requires a valid token ----
-                .anyRequest().authenticated()
+            .requestMatchers(HttpMethod.GET, "/client-profiles")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
+
+            .requestMatchers(HttpMethod.GET, "/client-profiles/*")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
+
+            .requestMatchers(HttpMethod.PATCH, "/client-profiles/*")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
+
+            .requestMatchers(HttpMethod.DELETE, "/client-profiles/*")
+            .hasAuthority("ADMIN")
+
+            // ---- Employee profiles ----
+            .requestMatchers(HttpMethod.GET, "/employee-profiles/**")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
+
+            .requestMatchers(HttpMethod.PATCH, "/employee-profiles/**")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
+
+            // ---- Me endpoints ----
+            .requestMatchers(HttpMethod.GET, "/me/client-profile")
+            .hasAuthority("CLIENT")
+
+            .requestMatchers(HttpMethod.GET, "/me/employee-profile")
+            .hasAnyAuthority("EMPLOYEE", "ADMIN")
+
+            .requestMatchers(HttpMethod.PATCH, "/me/password")
+            .authenticated()
+
+            .requestMatchers("/me/**")
+            .authenticated()
+
+            // ---- Care teams ----
+            .requestMatchers(HttpMethod.POST, "/care-teams/**")
+            .hasAuthority("ADMIN")
+
+            .requestMatchers(HttpMethod.PUT, "/care-teams/**")
+            .hasAuthority("ADMIN")
+
+            .requestMatchers(HttpMethod.DELETE, "/care-teams/**")
+            .hasAuthority("ADMIN")
+
+            .requestMatchers(HttpMethod.GET, "/care-teams/**")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
+
+            // ---- Everything else requires authentication ----
+            .anyRequest().authenticated()
         );
 
         http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);

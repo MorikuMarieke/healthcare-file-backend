@@ -34,12 +34,11 @@ public class GoalService {
     }
 
     @Transactional
-    public GoalResponse create(Long carePlanId, GoalCreateRequest req) {
+    public GoalResponse create(Long clientProfileId, GoalCreateRequest req) {
 
         validateEvaluationDate(req.getEvaluationDate());
 
-        CarePlan carePlan = carePlanRepository.findById(carePlanId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "CarePlan not found"));
+        CarePlan carePlan = getCarePlanByClientProfileId(clientProfileId);
 
         Goal goal = GoalMapper.toEntity(req);
         carePlan.addGoal(goal);
@@ -52,14 +51,18 @@ public class GoalService {
         return GoalMapper.toResponse(goal);
     }
 
-    public List<GoalResponse> getAll(Long carePlanId) {
+    public List<GoalResponse> getAll(Long clientProfileId) {
+        Long carePlanId = getCarePlanIdByClientProfileId(clientProfileId);
+
         return goalRepository.findAllByCarePlanId(carePlanId)
             .stream()
             .map(GoalMapper::toResponse)
             .collect(Collectors.toList());
     }
 
-    public GoalResponse getOne(Long carePlanId, Long goalId) {
+    public GoalResponse getOne(Long clientProfileId, Long goalId) {
+        Long carePlanId = getCarePlanIdByClientProfileId(clientProfileId);
+
         Goal goal = goalRepository.findByIdAndCarePlanId(goalId, carePlanId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Goal not found"));
 
@@ -67,9 +70,11 @@ public class GoalService {
     }
 
     @Transactional
-    public GoalResponse update(Long carePlanId, Long goalId, GoalUpdateRequest req) {
+    public GoalResponse update(Long clientProfileId, Long goalId, GoalUpdateRequest req) {
 
         validateEvaluationDate(req.getEvaluationDate());
+
+        Long carePlanId = getCarePlanIdByClientProfileId(clientProfileId);
 
         Goal goal = goalRepository.findByIdAndCarePlanId(goalId, carePlanId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Goal not found"));
@@ -85,15 +90,25 @@ public class GoalService {
     }
 
     @Transactional
-    public void delete(Long carePlanId, Long goalId) {
+    public void delete(Long clientProfileId, Long goalId) {
 
-        Goal goal = goalRepository.findByIdAndCarePlanId(goalId, carePlanId)
+        CarePlan carePlan = getCarePlanByClientProfileId(clientProfileId);
+
+        Goal goal = goalRepository.findByIdAndCarePlanId(goalId, carePlan.getId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Goal not found"));
 
-        CarePlan carePlan = goal.getCarePlan();
         carePlan.removeGoal(goal);
 
         carePlanRepository.save(carePlan);
+    }
+
+    private CarePlan getCarePlanByClientProfileId(Long clientProfileId) {
+        return carePlanRepository.findByClientProfileId(clientProfileId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "CarePlan not found"));
+    }
+
+    private Long getCarePlanIdByClientProfileId(Long clientProfileId) {
+        return getCarePlanByClientProfileId(clientProfileId).getId();
     }
 
     private void validateEvaluationDate(LocalDate evaluationDate) {

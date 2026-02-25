@@ -7,7 +7,7 @@ import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/care-plans")
+@RequestMapping("/client-profiles/{clientProfileId}/care-plan")
 public class CarePlanController {
 
     private final CarePlanService carePlanService;
@@ -16,16 +16,16 @@ public class CarePlanController {
         this.carePlanService = carePlanService;
     }
 
-    @GetMapping("/client/{clientProfileId}")
-    public CarePlanResponse getByClient(@PathVariable Long clientProfileId) {
+    @GetMapping
+    public CarePlanResponse get(@PathVariable Long clientProfileId) {
         return carePlanService.getByClientProfileId(clientProfileId);
     }
 
-    @PatchMapping("/{carePlanId}")
+    @PatchMapping
     public CarePlanResponse updateNotes(
-        @PathVariable Long carePlanId,
+        @PathVariable Long clientProfileId,
         @Valid @RequestBody CarePlanUpdateRequest req
     ) {
-        return carePlanService.updateCarePlanNotes(carePlanId, req.getNotes());
+        return carePlanService.updateCarePlanNotesByClientProfileId(clientProfileId, req.getNotes());
     }
 }

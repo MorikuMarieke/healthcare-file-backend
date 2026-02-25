@@ -6,8 +6,10 @@ import com.moriku.healthcare_file_backend.mapper.CarePlanMapper;
 import com.moriku.healthcare_file_backend.model.CarePlan;
 import com.moriku.healthcare_file_backend.repository.CarePlanRepository;
 import com.moriku.healthcare_file_backend.repository.ClientProfileRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class CarePlanService {
@@ -29,12 +31,12 @@ public class CarePlanService {
     }
 
     @Transactional
-    public CarePlanResponse updateCarePlanNotes(Long carePlanId, String notes) {
-        CarePlan plan = carePlanRepository.findById(carePlanId)
-            .orElseThrow(() -> new ResourceNotFoundException("CarePlan not found: " + carePlanId));
+    public CarePlanResponse updateCarePlanNotesByClientProfileId(Long clientProfileId, String notes) {
+        CarePlan carePlan = carePlanRepository.findByClientProfileId(clientProfileId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "CarePlan not found"));
 
-        plan.setNotes(notes.trim());
-        return CarePlanMapper.toResponse(plan);
+        carePlan.setNotes(notes);
+        return CarePlanMapper.toResponse(carePlan);
     }
 
 

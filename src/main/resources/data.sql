@@ -82,7 +82,6 @@ SELECT
 
 -- =========================
 -- CLIENT USER (password = Client123!)
--- (optioneel: alleen als je ook client-login wil testen)
 -- =========================
 INSERT INTO users (email, password, role_id, password_changed_at, created_at)
 SELECT
