@@ -48,15 +48,7 @@ public class MeService {
     }
 
     public ClientProfileResponse getMyClientProfile() {
-        User user = getCurrentUserOrThrow();
-
-        if (!user.isClient()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only CLIENT can access /me/client-profile");
-        }
-
-        ClientProfile profile = clientProfileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client profile not found"));
-
+        ClientProfile profile = getActiveClientProfileForCurrentClientOrThrow();
         return ClientProfileMapper.toResponse(profile);
     }
 
@@ -116,5 +108,24 @@ public class MeService {
         user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
         user.setPasswordChangedAt(Instant.now());
     }
+
+    public ClientProfile getActiveClientProfileForCurrentClientOrThrow() {
+        User user = getCurrentUserOrThrow();
+
+        if (!user.isClient()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only CLIENT can access this endpoint");
+        }
+
+        ClientProfile profile = clientProfileRepository.findByUserId(user.getId())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client profile not found"));
+
+        if (!profile.isActive()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Client profile is inactive");
+        }
+
+        return profile;
+    }
+
+    //TODO: /me endpoints voor alle onderdelen van het dossier zodra de architectuur staat /me/careplan me/careplan/goals me/careplan/reports (of hoe die endpoints dan heten)
 
 }

@@ -23,9 +23,6 @@ public class CareTeamController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CareTeamResponse create(@RequestBody @Valid CareTeamRequest req) {
-
-        System.out.println("CREATE CARE TEAM called");
-
         return careTeamService.createCareTeam(req);
     }
 

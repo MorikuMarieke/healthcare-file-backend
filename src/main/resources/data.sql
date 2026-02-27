@@ -97,3 +97,15 @@ UPDATE client_profiles
 SET user_id = (SELECT id FROM users WHERE email = 'client@test.local')
 WHERE bsn = '123456789'
   AND user_id IS NULL;
+
+-- =========================
+-- CARE TEAM (seed)
+-- =========================
+INSERT INTO care_teams (team_name, team_phone_number, team_email)
+SELECT
+    'Seed Team A',
+    '0612345678',
+    'teamA@test.local'
+    WHERE NOT EXISTS (
+    SELECT 1 FROM care_teams WHERE team_email = 'teamA@test.local'
+);

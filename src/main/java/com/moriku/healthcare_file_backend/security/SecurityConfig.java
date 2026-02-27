@@ -117,17 +117,28 @@ public class SecurityConfig {
             .authenticated()
 
             // ---- Care teams ----
-            .requestMatchers(HttpMethod.POST, "/care-teams/**")
-            .hasAuthority("ADMIN")
+// ---- Care team links ----
+// clients koppelen: ADMIN + EMPLOYEE
+                .requestMatchers(HttpMethod.POST, "/care-teams/*/clients/*").hasAnyAuthority("ADMIN", "EMPLOYEE")
+                .requestMatchers(HttpMethod.DELETE, "/care-teams/*/clients/*").hasAnyAuthority("ADMIN", "EMPLOYEE")
+//TODO: in verslag zetten dat idealiter alleen clienten kunnen worden toegevoegd aan team waar employee lid van is, maar dat is object level authorization en wil ik voor nu even niet aan opdracht toevoegen, maar zou wel een realistisch scenario zijn voor de toekomst.
 
-            .requestMatchers(HttpMethod.PUT, "/care-teams/**")
-            .hasAuthority("ADMIN")
+// employees koppelen: ADMIN only
+                .requestMatchers(HttpMethod.POST, "/care-teams/*/employees/*").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/care-teams/*/employees/*").hasAuthority("ADMIN")
 
-            .requestMatchers(HttpMethod.DELETE, "/care-teams/**")
-            .hasAuthority("ADMIN")
+// links bekijken: ADMIN + EMPLOYEE (of alleen ADMIN als je wil)
+                .requestMatchers(HttpMethod.GET, "/care-teams/*/clients").hasAnyAuthority("ADMIN", "EMPLOYEE")
+                .requestMatchers(HttpMethod.GET, "/care-teams/*/employees").hasAnyAuthority("ADMIN", "EMPLOYEE")
 
-            .requestMatchers(HttpMethod.GET, "/care-teams/**")
-            .hasAnyAuthority("ADMIN", "EMPLOYEE")
+// ---- Care teams CRUD ----
+                .requestMatchers(HttpMethod.POST, "/care-teams").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/care-teams/*").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/care-teams/*").hasAuthority("ADMIN")
+
+// GET teams (list + detail) voor staff
+                .requestMatchers(HttpMethod.GET, "/care-teams").hasAnyAuthority("ADMIN", "EMPLOYEE")
+                .requestMatchers(HttpMethod.GET, "/care-teams/*").hasAnyAuthority("ADMIN", "EMPLOYEE")
 
             // ---- Everything else requires authentication ----
             .anyRequest().authenticated()
