@@ -1,18 +1,26 @@
 package com.moriku.healthcare_file_backend.service;
 
-import com.moriku.healthcare_file_backend.dto.ClientProfileCreateRequestDto;
-import com.moriku.healthcare_file_backend.dto.ClientProfileResponseDto;
-import com.moriku.healthcare_file_backend.dto.ClientProfileUpdateRequestDto;
+import com.moriku.healthcare_file_backend.dto.client_profile.ClientProfileCreateRequest;
+import com.moriku.healthcare_file_backend.dto.client_profile.ClientProfileResponse;
+import com.moriku.healthcare_file_backend.dto.client_profile.ClientProfileStatusRequest;
+import com.moriku.healthcare_file_backend.dto.client_profile.ClientProfileUpdateRequest;
+import com.moriku.healthcare_file_backend.exception.BadRequestException;
+import com.moriku.healthcare_file_backend.exception.ConflictException;
+import com.moriku.healthcare_file_backend.exception.ResourceNotFoundException;
 import com.moriku.healthcare_file_backend.mapper.ClientProfileMapper;
+import com.moriku.healthcare_file_backend.model.CarePlan;
 import com.moriku.healthcare_file_backend.model.ClientProfile;
 import com.moriku.healthcare_file_backend.model.ContactDetails;
 import com.moriku.healthcare_file_backend.model.User;
+import com.moriku.healthcare_file_backend.repository.CarePlanRepository;
 import com.moriku.healthcare_file_backend.repository.ClientProfileRepository;
 import com.moriku.healthcare_file_backend.repository.UserRepository;
 import com.moriku.healthcare_file_backend.security.SecurityUtils;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -21,28 +29,46 @@ import java.util.List;
 public class ClientProfileService {
 
     private final ClientProfileRepository clientProfileRepository;
-
     private final UserRepository userRepository;
+    private final CarePlanRepository carePlanRepository;
 
-    public ClientProfileService(ClientProfileRepository clientProfileRepository, UserRepository userRepository) {
+    public ClientProfileService(ClientProfileRepository clientProfileRepository, UserRepository userRepository, CarePlanRepository carePlanRepository) {
         this.clientProfileRepository = clientProfileRepository;
         this.userRepository = userRepository;
+        this.carePlanRepository = carePlanRepository;
     }
+
     @Transactional
-    public ClientProfileResponseDto createClientProfile(ClientProfileCreateRequestDto req) {
+    public ClientProfileResponse createClientProfile(ClientProfileCreateRequest req) {
         String bsn = req.getBsn().trim();
 
         if (clientProfileRepository.existsByBsn(bsn)) {
-            throw new IllegalArgumentException("ClientProfile already exists for BSN: " + bsn);
+            throw new ConflictException("ClientProfile already exists for BSN: " + bsn);
         }
 
         ClientProfile profile = ClientProfileMapper.toEntity(req);
+
         ContactDetails details = new ContactDetails();
         details.setClientProfile(profile);
         profile.setContactDetails(details);
+
+        // 1) save client first -> we now have an id
         ClientProfile saved = clientProfileRepository.save(profile);
+
+        // 2) create care plan for this client (notes empty, createdAt via @PrePersist)
+        CarePlan plan = new CarePlan();
+        plan.setClientProfile(saved);
+        plan.setNotes("");
+        carePlanRepository.save(plan);
+
         return ClientProfileMapper.toResponse(saved);
     }
+
+    /**
+     * TODO: Dit blijft tijdelijk ResponseStatusException (401),
+     * omdat je (nog) geen UnauthorizedException hebt.
+     * Als je security /me/** al op authenticated hebt staan, komt dit bijna nooit voor.
+     */
 
     private User getCurrentUserOrThrow() {
         String email = SecurityUtils.getCurrentEmail();
@@ -55,55 +81,70 @@ public class ClientProfileService {
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
     }
 
-    public ClientProfileResponseDto getMyClientProfile() {
+    @Transactional(readOnly = true)
+    public ClientProfileResponse getMyClientProfile() {
         User user = getCurrentUserOrThrow();
 
-        if (!user.isClient()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only CLIENT can access /me/client-profile");
-        }
-
-        ClientProfile profile = clientProfileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client profile not found"));
+        // role check hoort idealiter in SecurityConfig (requestMatcher /me/client-profile -> CLIENT)
+        ClientProfile profile = clientProfileRepository.findByUserIdAndActiveTrue(user.getId())
+            .orElseThrow(() -> new ResourceNotFoundException("Client profile not found"));
 
         return ClientProfileMapper.toResponse(profile);
     }
 
-
-    public List<ClientProfileResponseDto> getAllClientProfiles() {
+    @Transactional(readOnly = true)
+    public List<ClientProfileResponse> getAllClientProfiles() {
         return clientProfileRepository.findAll().stream()
             .map(ClientProfileMapper::toResponse)
             .toList();
     }
 
-    public ClientProfileResponseDto getClientProfileById(Long id) {
+    @Transactional(readOnly = true)
+    public ClientProfileResponse getClientProfileById(Long id) {
         ClientProfile profile = clientProfileRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("ClientProfile not found with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException("ClientProfile not found with id: " + id));
         return ClientProfileMapper.toResponse(profile);
     }
 
     @Transactional
-    public ClientProfileResponseDto patchClientProfile(Long id, ClientProfileUpdateRequestDto req) {
+    public ClientProfileResponse patchClientProfile(Long id, ClientProfileUpdateRequest req) {
         ClientProfile profile = clientProfileRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("ClientProfile not found with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException("ClientProfile not found with id: " + id));
 
-        if (req.getFirstName() != null) profile.setFirstName(req.getFirstName().trim());
-        if (req.getLastName() != null) profile.setLastName(req.getLastName().trim());
-        if (req.getActive() != null) profile.setActive(req.getActive());
+        if (req.getFirstName() != null && !req.getFirstName().isBlank()) {
+            profile.setFirstName(req.getFirstName().trim());
+        }
+
+        if (req.getLastName() != null && !req.getLastName().isBlank()) {
+            profile.setLastName(req.getLastName().trim());
+        }
+
+        if (req.getSex() != null) {
+            profile.setSex(req.getSex());
+        }
+
+        if (req.getBirthDate() != null) {
+            profile.setBirthDate(req.getBirthDate());
+        }
 
         return ClientProfileMapper.toResponse(profile);
     }
 
+    @Transactional
     public void deleteClientProfile(Long id) {
-        if (!clientProfileRepository.existsById(id)) {
-            throw new IllegalArgumentException("ClientProfile not found with id: " + id);
-        }
-        clientProfileRepository.deleteById(id);
+        ClientProfile profile = clientProfileRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("ClientProfile not found with id: " + id));
+        clientProfileRepository.delete(profile);
     }
 
     @Transactional
     public void patchContactEmail(Long clientProfileId, String email) {
+        if (email == null || email.isBlank()) {
+            throw new BadRequestException("Email must not be blank");
+        }
+
         ClientProfile profile = clientProfileRepository.findById(clientProfileId)
-            .orElseThrow(() -> new IllegalArgumentException("ClientProfile not found with id: " + clientProfileId));
+            .orElseThrow(() -> new ResourceNotFoundException("ClientProfile not found with id: " + clientProfileId));
 
         ContactDetails details = profile.getContactDetails();
         if (details == null) {
@@ -115,5 +156,12 @@ public class ClientProfileService {
         details.setEmail(email.trim());
     }
 
+    @Transactional
+    public void setClientProfileActive(Long clientProfileId, ClientProfileStatusRequest dto) {
+        ClientProfile clientProfile = clientProfileRepository.findById(clientProfileId)
+            .orElseThrow(() -> new ResourceNotFoundException("ClientProfile not found with id: " + clientProfileId));
 
+        clientProfile.setActive(Boolean.TRUE.equals(dto.getActive()));
+        clientProfileRepository.save(clientProfile);
+    }
 }

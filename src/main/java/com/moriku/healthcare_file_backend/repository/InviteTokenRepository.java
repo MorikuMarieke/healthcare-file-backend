@@ -7,5 +7,8 @@ import java.util.Optional;
 
 public interface InviteTokenRepository extends JpaRepository<InviteToken, String> {
     Optional<InviteToken> findByToken(String token);
+
+    void deleteAllByUser_Id(Long userId);
+
 }
 

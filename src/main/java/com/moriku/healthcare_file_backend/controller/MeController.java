@@ -1,9 +1,9 @@
 package com.moriku.healthcare_file_backend.controller;
 
-import com.moriku.healthcare_file_backend.dto.ClientProfileResponseDto;
-import com.moriku.healthcare_file_backend.dto.EmployeeProfileResponseDto;
-import com.moriku.healthcare_file_backend.dto.UserPasswordChangeRequestDto;
-import com.moriku.healthcare_file_backend.dto.UserResponseDto;
+import com.moriku.healthcare_file_backend.dto.client_profile.ClientProfileResponse;
+import com.moriku.healthcare_file_backend.dto.employee_profile.EmployeeProfileResponse;
+import com.moriku.healthcare_file_backend.dto.user.UserPasswordChangeRequest;
+import com.moriku.healthcare_file_backend.dto.user.UserResponse;
 import com.moriku.healthcare_file_backend.service.MeService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -20,23 +20,23 @@ public class MeController {
     }
 
     @GetMapping
-    public UserResponseDto me() {
+    public UserResponse me() {
         return meService.getMe();
     }
 
     @GetMapping("/client-profile")
-    public ClientProfileResponseDto myClientProfile() {
+    public ClientProfileResponse myClientProfile() {
         return meService.getMyClientProfile();
     }
 
     @GetMapping("/employee-profile")
-    public EmployeeProfileResponseDto myEmployeeProfile() {
+    public EmployeeProfileResponse myEmployeeProfile() {
         return meService.getMyEmployeeProfile();
     }
 
     @PatchMapping("/password")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void changeMyPassword(@Valid @RequestBody UserPasswordChangeRequestDto request) {
+    public void changeMyPassword(@Valid @RequestBody UserPasswordChangeRequest request) {
         meService.changeMyPassword(request);
     }
 }

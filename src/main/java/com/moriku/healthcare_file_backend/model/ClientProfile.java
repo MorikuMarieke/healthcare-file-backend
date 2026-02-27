@@ -3,6 +3,7 @@ package com.moriku.healthcare_file_backend.model;
 import jakarta.persistence.*;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "client_profiles")
@@ -22,6 +23,13 @@ public class ClientProfile {
     private String lastName;
 
     @Column(nullable = false)
+    private LocalDate birthDate;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Sex sex;
+
+    @Column(nullable = false)
     private boolean active = true;
 
     @Column(nullable = false, updatable = false)
@@ -33,6 +41,9 @@ public class ClientProfile {
 
     @OneToOne(mappedBy = "clientProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private ContactDetails contactDetails;
+
+    @OneToOne(mappedBy = "clientProfile", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private CarePlan carePlan;
 
     public ClientProfile() {
     }
@@ -68,6 +79,22 @@ public class ClientProfile {
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
+    }
+
+    public LocalDate getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
+    }
+
+    public Sex getSex() {
+        return sex;
+    }
+
+    public void setSex(Sex sex) {
+        this.sex = sex;
     }
 
     public boolean isActive() {

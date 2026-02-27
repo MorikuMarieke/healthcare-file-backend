@@ -1,9 +1,6 @@
 package com.moriku.healthcare_file_backend.controller;
 
-import com.moriku.healthcare_file_backend.dto.ClientProfileCreateRequestDto;
-import com.moriku.healthcare_file_backend.dto.ClientProfileResponseDto;
-import com.moriku.healthcare_file_backend.dto.ClientProfileUpdateRequestDto;
-import com.moriku.healthcare_file_backend.dto.ContactDetailsPatchRequestDto;
+import com.moriku.healthcare_file_backend.dto.client_profile.*;
 import com.moriku.healthcare_file_backend.service.ClientProfileService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -23,24 +20,24 @@ public class ClientProfileController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ClientProfileResponseDto createClientProfile(@Valid @RequestBody ClientProfileCreateRequestDto request) {
+    public ClientProfileResponse createClientProfile(@Valid @RequestBody ClientProfileCreateRequest request) {
         return clientProfileService.createClientProfile(request);
     }
 
     @GetMapping
-    public List<ClientProfileResponseDto> getAllClientProfiles() {
+    public List<ClientProfileResponse> getAllClientProfiles() {
         return clientProfileService.getAllClientProfiles();
     }
 
     @GetMapping("/{id}")
-    public ClientProfileResponseDto getClientProfileById(@PathVariable Long id) {
+    public ClientProfileResponse getClientProfileById(@PathVariable Long id) {
         return clientProfileService.getClientProfileById(id);
     }
 
     @PatchMapping("/{id}")
-    public ClientProfileResponseDto patchClientProfile(
+    public ClientProfileResponse patchClientProfile(
         @PathVariable Long id,
-        @RequestBody ClientProfileUpdateRequestDto request
+        @RequestBody ClientProfileUpdateRequest request
     ) {
         return clientProfileService.patchClientProfile(id, request);
     }
@@ -53,8 +50,17 @@ public class ClientProfileController {
 
     @PatchMapping("/{id}/contact-details")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void patchContactDetails(@PathVariable Long id, @Valid @RequestBody ContactDetailsPatchRequestDto req) {
+    public void patchContactDetails(@PathVariable Long id, @Valid @RequestBody ContactDetailsPatchRequest req) {
         clientProfileService.patchContactEmail(id, req.getEmail());
     }
 
+    @PatchMapping("/{id}/active")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void setClientProfileActive(@PathVariable Long id,
+                                       @Valid @RequestBody ClientProfileStatusRequest request) {
+        clientProfileService.setClientProfileActive(id, request);
+    }
+//
+//    @GetMapping("/id/contact-details")
+//    public
 }

@@ -1,9 +1,9 @@
 package com.moriku.healthcare_file_backend.service;
 
-import com.moriku.healthcare_file_backend.dto.ClientProfileResponseDto;
-import com.moriku.healthcare_file_backend.dto.EmployeeProfileResponseDto;
-import com.moriku.healthcare_file_backend.dto.UserPasswordChangeRequestDto;
-import com.moriku.healthcare_file_backend.dto.UserResponseDto;
+import com.moriku.healthcare_file_backend.dto.client_profile.ClientProfileResponse;
+import com.moriku.healthcare_file_backend.dto.employee_profile.EmployeeProfileResponse;
+import com.moriku.healthcare_file_backend.dto.user.UserPasswordChangeRequest;
+import com.moriku.healthcare_file_backend.dto.user.UserResponse;
 import com.moriku.healthcare_file_backend.mapper.ClientProfileMapper;
 import com.moriku.healthcare_file_backend.mapper.EmployeeProfileMapper;
 import com.moriku.healthcare_file_backend.mapper.UserMapper;
@@ -42,25 +42,17 @@ public class MeService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public UserResponseDto getMe() {
+    public UserResponse getMe() {
         User user = getCurrentUserOrThrow();
         return UserMapper.toResponse(user);
     }
 
-    public ClientProfileResponseDto getMyClientProfile() {
-        User user = getCurrentUserOrThrow();
-
-        if (!user.isClient()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only CLIENT can access /me/client-profile");
-        }
-
-        ClientProfile profile = clientProfileRepository.findByUserId(user.getId())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client profile not found"));
-
+    public ClientProfileResponse getMyClientProfile() {
+        ClientProfile profile = getActiveClientProfileForCurrentClientOrThrow();
         return ClientProfileMapper.toResponse(profile);
     }
 
-    public EmployeeProfileResponseDto getMyEmployeeProfile() {
+    public EmployeeProfileResponse getMyEmployeeProfile() {
         User user = getCurrentUserOrThrow();
 
         if (!user.isEmployee() && !user.isAdmin()) {
@@ -85,8 +77,23 @@ public class MeService {
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
     }
 
+    public Long getMyEmployeeId() {
+        User user = getCurrentUserOrThrow();
+
+        if (!user.isEmployee() && !user.isAdmin()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only EMPLOYEE/ADMIN can perform this action");
+        }
+
+        boolean exists = employeeProfileRepository.existsById(user.getId());
+        if (!exists) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee profile not found");
+        }
+
+        return user.getId();
+    }
+
     @Transactional
-    public void changeMyPassword(UserPasswordChangeRequestDto dto) {
+    public void changeMyPassword(UserPasswordChangeRequest dto) {
         User user = getCurrentUserOrThrow();
 
         if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPassword())) {
@@ -101,5 +108,24 @@ public class MeService {
         user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
         user.setPasswordChangedAt(Instant.now());
     }
+
+    public ClientProfile getActiveClientProfileForCurrentClientOrThrow() {
+        User user = getCurrentUserOrThrow();
+
+        if (!user.isClient()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only CLIENT can access this endpoint");
+        }
+
+        ClientProfile profile = clientProfileRepository.findByUserId(user.getId())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client profile not found"));
+
+        if (!profile.isActive()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Client profile is inactive");
+        }
+
+        return profile;
+    }
+
+    //TODO: /me endpoints voor alle onderdelen van het dossier zodra de architectuur staat /me/careplan me/careplan/goals me/careplan/reports (of hoe die endpoints dan heten)
 
 }
