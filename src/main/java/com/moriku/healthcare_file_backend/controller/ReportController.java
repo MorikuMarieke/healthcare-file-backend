@@ -1,9 +1,11 @@
 package com.moriku.healthcare_file_backend.controller;
 
+import com.moriku.healthcare_file_backend.dto.common.PageResponse;
 import com.moriku.healthcare_file_backend.dto.report.ReportCreateRequest;
 import com.moriku.healthcare_file_backend.dto.report.ReportResponse;
 import com.moriku.healthcare_file_backend.dto.report.ReportUpdateRequest;
 import com.moriku.healthcare_file_backend.service.ReportService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +23,9 @@ public class ReportController {
     }
 
     @PostMapping
-    public ResponseEntity<ReportResponse> create(@RequestBody ReportCreateRequest request) {
+    public ResponseEntity<ReportResponse> create(
+        @Valid @RequestBody ReportCreateRequest request
+    ) {
         ReportResponse response = reportService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -45,5 +49,13 @@ public class ReportController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         reportService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping
+    public ResponseEntity<PageResponse<ReportResponse>> getOverview(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "25") int size
+    ) {
+        return ResponseEntity.ok(reportService.getOverview(page, size));
     }
 }

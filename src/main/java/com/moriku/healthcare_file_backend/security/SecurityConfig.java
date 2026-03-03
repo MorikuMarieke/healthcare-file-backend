@@ -103,18 +103,42 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.PATCH, "/employee-profiles/**")
             .hasAnyAuthority("ADMIN", "EMPLOYEE")
 
-            // ---- Report CRUD (ADMIN + EMPLOYEE) ----
-            .requestMatchers("/reports/**")
+            // =====================================================
+            // REPORTS
+            // =====================================================
+            // Staff mag reports overzicht lezen
+            .requestMatchers(HttpMethod.GET, "/reports")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
+            // Staff mag reports lezen (overzicht + detail)
+            .requestMatchers(HttpMethod.GET, "/reports/**")
             .hasAnyAuthority("ADMIN", "EMPLOYEE")
 
-            // ---- Me endpoints ----
+            // Staff mag reports lezen per careplan
+            .requestMatchers(HttpMethod.GET, "/care-plans/*/reports/**")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
+
+            // Staff mag reports aanmaken
+            .requestMatchers(HttpMethod.POST, "/reports/**")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
+
+            // Staff mag reports wijzigen/verwijderen, ownership check in service
+            .requestMatchers(HttpMethod.PUT, "/reports/**")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
+
+            .requestMatchers(HttpMethod.DELETE, "/reports/**")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
+
+            // =====================================================
+            // ME ENDPOINTS
+            // =====================================================
+
             .requestMatchers(HttpMethod.GET, "/me/client-profile")
             .hasAuthority("CLIENT")
 
             .requestMatchers(HttpMethod.GET, "/me/employee-profile")
             .hasAnyAuthority("EMPLOYEE", "ADMIN")
 
-            // ---- Me reports (CLIENT only) ----
+            // Me reports (CLIENT only) - must be before /me/**
             .requestMatchers(HttpMethod.GET, "/me/reports/**")
             .hasAuthority("CLIENT")
 
@@ -124,8 +148,10 @@ public class SecurityConfig {
             .requestMatchers("/me/**")
             .authenticated()
 
-            // ---- Care teams ----
-            // ---- Care team links ----
+            // =====================================================
+            // CARE TEAMS
+            // =====================================================
+
             // clients koppelen: ADMIN + EMPLOYEE
             .requestMatchers(HttpMethod.POST, "/care-teams/*/clients/*").hasAnyAuthority("ADMIN", "EMPLOYEE")
             .requestMatchers(HttpMethod.DELETE, "/care-teams/*/clients/*").hasAnyAuthority("ADMIN", "EMPLOYEE")
@@ -139,7 +165,7 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.GET, "/care-teams/*/clients").hasAnyAuthority("ADMIN", "EMPLOYEE")
             .requestMatchers(HttpMethod.GET, "/care-teams/*/employees").hasAnyAuthority("ADMIN", "EMPLOYEE")
 
-            // ---- Care teams CRUD ----
+            // Care teams CRUD
             .requestMatchers(HttpMethod.POST, "/care-teams").hasAuthority("ADMIN")
             .requestMatchers(HttpMethod.PUT, "/care-teams/*").hasAuthority("ADMIN")
             .requestMatchers(HttpMethod.DELETE, "/care-teams/*").hasAuthority("ADMIN")
@@ -171,4 +197,4 @@ public class SecurityConfig {
         auth.setPasswordEncoder(passwordEncoder);
         return new ProviderManager(auth);
     }
-}git
+}

@@ -49,12 +49,12 @@ public class MeController {
     }
 
     //Reports
-    @GetMapping
+    @GetMapping("/reports")
     public ResponseEntity<List<ReportResponse>> getMine() {
         return ResponseEntity.ok(reportService.getMyReports());
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/reports/{id}")
     public ResponseEntity<ReportResponse> getMineById(@PathVariable Long id) {
         return ResponseEntity.ok(reportService.getMyReportById(id));
     }

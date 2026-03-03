@@ -1,5 +1,6 @@
 package com.moriku.healthcare_file_backend.service;
 
+import com.moriku.healthcare_file_backend.dto.common.PageResponse;
 import com.moriku.healthcare_file_backend.dto.report.ReportCreateRequest;
 import com.moriku.healthcare_file_backend.dto.report.ReportResponse;
 import com.moriku.healthcare_file_backend.dto.report.ReportUpdateRequest;
@@ -10,6 +11,10 @@ import com.moriku.healthcare_file_backend.model.ClientProfile;
 import com.moriku.healthcare_file_backend.model.Report;
 import com.moriku.healthcare_file_backend.model.User;
 import com.moriku.healthcare_file_backend.repository.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -54,6 +59,19 @@ public class ReportService {
         return ReportMapper.toResponse(report);
     }
 
+    @Transactional
+    public ReportResponse update(Long reportId, ReportUpdateRequest request) {
+        Report report = reportRepository.findById(reportId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Report not found"));
+
+        assertCurrentEmployeeIsAuthor(report);
+
+        report.setTitle(request.getTitle());
+        report.setText(request.getText());
+
+        return ReportMapper.toResponse(report);
+    }
+
     public ReportResponse getById(Long reportId) {
         Report report = reportRepository.findById(reportId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Report not found"));
@@ -69,20 +87,11 @@ public class ReportService {
     }
 
     @Transactional
-    public ReportResponse update(Long reportId, ReportUpdateRequest request) {
-        Report report = reportRepository.findById(reportId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Report not found"));
-
-        report.setTitle(request.getTitle());
-        report.setText(request.getText());
-
-        return ReportMapper.toResponse(report);
-    }
-
-    @Transactional
     public void delete(Long reportId) {
         Report report = reportRepository.findById(reportId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Report not found"));
+
+        assertCurrentEmployeeIsAuthor(report);
 
         reportRepository.delete(report);
     }
@@ -103,13 +112,48 @@ public class ReportService {
         return ReportMapper.toResponse(report);
     }
 
+    public PageResponse<ReportResponse> getOverview(int page, int size) {
+
+        int safeSize = Math.min(Math.max(size, 1), 25);
+
+        Pageable pageable = PageRequest.of(
+            page,
+            safeSize,
+            Sort.by("createdAt").descending()
+        );
+
+        Page<Report> result = reportRepository.findAll(pageable);
+
+        List<ReportResponse> content = result.getContent()
+            .stream()
+            .map(ReportMapper::toResponse)
+            .toList();
+
+        return new PageResponse<>(
+            content,
+            result.getNumber(),
+            result.getSize(),
+            result.getTotalElements(),
+            result.getTotalPages(),
+            result.isLast()
+        );
+    }
+
     // ---- helpers ----
 
     private EmployeeProfile getCurrentEmployeeProfile() {
         User user = getCurrentUser();
 
         return employeeProfileRepository.findByUser_Id(user.getId())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "EmployeeProfile not found"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "No employee authority"));
+    }
+
+    private void assertCurrentEmployeeIsAuthor(Report report) {
+        EmployeeProfile currentEmployee = getCurrentEmployeeProfile();
+
+        if (!report.getAuthor().getId().equals(currentEmployee.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not the author of this report");
+        }
     }
 
     private CarePlan getMyCarePlan() {
