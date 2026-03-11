@@ -50,6 +50,8 @@ public class CareTeamLinkService {
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "EmployeeProfile not found"));
 
         CareTeamMember saved = memberRepository.save(new CareTeamMember(team, employee));
+
+        System.out.println("addMember called: teamId=" + teamId + ", employeeId=" + employeeId);
         return CareTeamMapper.toMemberResponse(saved);
     }
 
@@ -93,6 +95,54 @@ public class CareTeamLinkService {
             .stream()
             .map(CareTeamMapper::toClientResponse)
             .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public CareTeamMemberResponse moveMember(Long fromTeamId, Long employeeId, Long toTeamId) {
+        if (fromTeamId.equals(toTeamId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "fromTeamId and toTeamId must be different");
+        }
+
+        CareTeamMember existingLink = memberRepository.findByCareTeamIdAndEmployeeProfileId(fromTeamId, employeeId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Member link not found"));
+
+        if (memberRepository.existsByCareTeamIdAndEmployeeProfileId(toTeamId, employeeId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Already member of target team");
+        }
+
+        CareTeam toTeam = careTeamRepository.findById(toTeamId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Target CareTeam not found"));
+
+        EmployeeProfile employee = existingLink.getEmployeeProfile();
+
+        memberRepository.delete(existingLink);
+
+        CareTeamMember saved = memberRepository.save(new CareTeamMember(toTeam, employee));
+        return CareTeamMapper.toMemberResponse(saved);
+    }
+
+    @Transactional
+    public CareTeamClientResponse moveClient(Long fromTeamId, Long clientId, Long toTeamId) {
+        if (fromTeamId.equals(toTeamId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "fromTeamId and toTeamId must be different");
+        }
+
+        CareTeamClient existingLink = clientRepository.findByCareTeamIdAndClientProfileId(fromTeamId, clientId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client link not found"));
+
+        if (clientRepository.existsByCareTeamIdAndClientProfileId(toTeamId, clientId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Already client of target team");
+        }
+
+        CareTeam toTeam = careTeamRepository.findById(toTeamId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Target CareTeam not found"));
+
+        ClientProfile client = existingLink.getClientProfile();
+
+        clientRepository.delete(existingLink);
+
+        CareTeamClient saved = clientRepository.save(new CareTeamClient(toTeam, client));
+        return CareTeamMapper.toClientResponse(saved);
     }
 
     // ===== Access Gate =====

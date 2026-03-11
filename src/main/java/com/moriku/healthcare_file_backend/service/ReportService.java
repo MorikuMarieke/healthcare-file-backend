@@ -6,18 +6,20 @@ import com.moriku.healthcare_file_backend.dto.report.ReportResponse;
 import com.moriku.healthcare_file_backend.dto.report.ReportUpdateRequest;
 import com.moriku.healthcare_file_backend.mapper.ReportMapper;
 import com.moriku.healthcare_file_backend.model.CarePlan;
-import com.moriku.healthcare_file_backend.model.EmployeeProfile;
 import com.moriku.healthcare_file_backend.model.ClientProfile;
+import com.moriku.healthcare_file_backend.model.EmployeeProfile;
 import com.moriku.healthcare_file_backend.model.Report;
 import com.moriku.healthcare_file_backend.model.User;
-import com.moriku.healthcare_file_backend.repository.*;
+import com.moriku.healthcare_file_backend.repository.CarePlanRepository;
+import com.moriku.healthcare_file_backend.repository.CareTeamMemberRepository;
+import com.moriku.healthcare_file_backend.repository.ClientProfileRepository;
+import com.moriku.healthcare_file_backend.repository.ReportRepository;
+import com.moriku.healthcare_file_backend.security.SecurityContextService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -30,28 +32,38 @@ public class ReportService {
 
     private final ReportRepository reportRepository;
     private final CarePlanRepository carePlanRepository;
-    private final UserRepository userRepository;
-    private final EmployeeProfileRepository employeeProfileRepository;
     private final ClientProfileRepository clientProfileRepository;
+    private final CareTeamMemberRepository careTeamMemberRepository;
+    private final SecurityContextService securityContextService;
 
-    public ReportService(ReportRepository reportRepository,
-                         CarePlanRepository carePlanRepository,
-                         UserRepository userRepository,
-                         EmployeeProfileRepository employeeProfileRepository,
-                         ClientProfileRepository clientProfileRepository) {
+    public ReportService(
+        ReportRepository reportRepository,
+        CarePlanRepository carePlanRepository,
+        ClientProfileRepository clientProfileRepository,
+        CareTeamMemberRepository careTeamMemberRepository,
+        SecurityContextService securityContextService
+    ) {
         this.reportRepository = reportRepository;
         this.carePlanRepository = carePlanRepository;
-        this.userRepository = userRepository;
-        this.employeeProfileRepository = employeeProfileRepository;
         this.clientProfileRepository = clientProfileRepository;
+        this.careTeamMemberRepository = careTeamMemberRepository;
+        this.securityContextService = securityContextService;
     }
+
+    // =====================================================
+    // STAFF
+    // =====================================================
 
     @Transactional
     public ReportResponse create(ReportCreateRequest request) {
-        EmployeeProfile author = getCurrentEmployeeProfile();
+        EmployeeProfile author = securityContextService.getCurrentEmployeeProfileOrThrow();
 
         CarePlan carePlan = carePlanRepository.findById(request.getCarePlanId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "CarePlan not found"));
+
+        ClientProfile clientProfile = carePlan.getClientProfile();
+
+        assertEmployeeHasAccessToClientOrThrow(author, clientProfile);
 
         Report report = new Report(request.getTitle(), request.getText(), carePlan, author);
         reportRepository.save(report);
@@ -61,10 +73,12 @@ public class ReportService {
 
     @Transactional
     public ReportResponse update(Long reportId, ReportUpdateRequest request) {
+        EmployeeProfile currentEmployee = securityContextService.getCurrentEmployeeProfileOrThrow();
+
         Report report = reportRepository.findById(reportId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Report not found"));
 
-        assertCurrentEmployeeIsAuthor(report);
+        assertCurrentEmployeeIsAuthorOrThrow(currentEmployee, report);
 
         report.setTitle(request.getTitle());
         report.setText(request.getText());
@@ -88,32 +102,17 @@ public class ReportService {
 
     @Transactional
     public void delete(Long reportId) {
+        EmployeeProfile currentEmployee = securityContextService.getCurrentEmployeeProfileOrThrow();
+
         Report report = reportRepository.findById(reportId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Report not found"));
 
-        assertCurrentEmployeeIsAuthor(report);
+        assertCurrentEmployeeIsAuthorOrThrow(currentEmployee, report);
 
         reportRepository.delete(report);
     }
 
-    // ---- /me (CLIENT read-only) ----
-
-    public List<ReportResponse> getMyReports() {
-        CarePlan myCarePlan = getMyCarePlan();
-        return getByCarePlan(myCarePlan.getId());
-    }
-
-    public ReportResponse getMyReportById(Long reportId) {
-        CarePlan myCarePlan = getMyCarePlan();
-
-        Report report = reportRepository.findByIdAndCarePlanId(reportId, myCarePlan.getId())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Report not found"));
-
-        return ReportMapper.toResponse(report);
-    }
-
     public PageResponse<ReportResponse> getOverview(int page, int size) {
-
         int safeSize = Math.min(Math.max(size, 1), 25);
 
         Pageable pageable = PageRequest.of(
@@ -139,42 +138,50 @@ public class ReportService {
         );
     }
 
-    // ---- helpers ----
+    // =====================================================
+    // /me (CLIENT read-only)
+    // =====================================================
 
-    private EmployeeProfile getCurrentEmployeeProfile() {
-        User user = getCurrentUser();
-
-        return employeeProfileRepository.findByUser_Id(user.getId())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "No employee authority"));
+    public List<ReportResponse> getMyReports() {
+        CarePlan myCarePlan = getMyCarePlan();
+        return getByCarePlan(myCarePlan.getId());
     }
 
-    private void assertCurrentEmployeeIsAuthor(Report report) {
-        EmployeeProfile currentEmployee = getCurrentEmployeeProfile();
+    public ReportResponse getMyReportById(Long reportId) {
+        CarePlan myCarePlan = getMyCarePlan();
 
-        if (!report.getAuthor().getId().equals(currentEmployee.getId())) {
+        Report report = reportRepository.findByIdAndCarePlanId(reportId, myCarePlan.getId())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Report not found"));
+
+        return ReportMapper.toResponse(report);
+    }
+
+    // =====================================================
+    // helpers
+    // =====================================================
+
+    private void assertEmployeeHasAccessToClientOrThrow(EmployeeProfile employee, ClientProfile clientProfile) {
+        Long careTeamId = clientProfile.getCareTeam().getId();
+
+        boolean allowed = careTeamMemberRepository.existsByCareTeamIdAndEmployeeProfileId(careTeamId, employee.getId());
+        if (!allowed) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No access to this client");
+        }
+    }
+
+    private void assertCurrentEmployeeIsAuthorOrThrow(EmployeeProfile employee, Report report) {
+        if (!report.getAuthor().getId().equals(employee.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not the author of this report");
         }
     }
 
     private CarePlan getMyCarePlan() {
-        User user = getCurrentUser();
+        User user = securityContextService.getCurrentUserOrThrow();
 
         ClientProfile clientProfile = clientProfileRepository.findByUserId(user.getId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "ClientProfile not found"));
 
         return carePlanRepository.findByClientProfileId(clientProfile.getId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "CarePlan not found"));
-    }
-
-    private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || authentication.getName() == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated");
-        }
-
-        String email = authentication.getName().trim().toLowerCase();
-
-        return userRepository.findByEmail(email)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
     }
 }

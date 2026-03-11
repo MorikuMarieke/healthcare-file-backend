@@ -19,14 +19,11 @@ public class CareTeamController {
         this.careTeamService = careTeamService;
     }
 
-
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CareTeamResponse create(@RequestBody @Valid CareTeamRequest req) {
         return careTeamService.createCareTeam(req);
     }
-
-
 
     @GetMapping("/{id}")
     public CareTeamResponse getById(@PathVariable Long id) {

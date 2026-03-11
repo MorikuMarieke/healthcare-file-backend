@@ -45,6 +45,8 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
             .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
             .requestMatchers(HttpMethod.POST, "/auth/invite/accept").permitAll()
+            .requestMatchers("/error").permitAll()
+            .requestMatchers("/error/**").permitAll()
 
             // ---- Users (ADMIN only) ----
             .requestMatchers(HttpMethod.POST, "/users").hasAuthority("ADMIN")
@@ -109,24 +111,24 @@ public class SecurityConfig {
             // Staff mag reports overzicht lezen
             .requestMatchers(HttpMethod.GET, "/reports")
             .hasAnyAuthority("ADMIN", "EMPLOYEE")
-            // Staff mag reports lezen (overzicht + detail)
-            .requestMatchers(HttpMethod.GET, "/reports/**")
-            .hasAnyAuthority("ADMIN", "EMPLOYEE")
 
             // Staff mag reports lezen per careplan
-            .requestMatchers(HttpMethod.GET, "/care-plans/*/reports/**")
+            .requestMatchers(HttpMethod.GET, "/reports/care-plans/*")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
+
+            // Staff mag reports lezen (overzicht + detail)
+            .requestMatchers(HttpMethod.GET, "/reports/*")
             .hasAnyAuthority("ADMIN", "EMPLOYEE")
 
             // Staff mag reports aanmaken
             .requestMatchers(HttpMethod.POST, "/reports/**")
-            .hasAnyAuthority("ADMIN", "EMPLOYEE")
+            .hasAuthority("EMPLOYEE")
 
-            // Staff mag reports wijzigen/verwijderen, ownership check in service
             .requestMatchers(HttpMethod.PUT, "/reports/**")
-            .hasAnyAuthority("ADMIN", "EMPLOYEE")
+            .hasAuthority("EMPLOYEE")
 
             .requestMatchers(HttpMethod.DELETE, "/reports/**")
-            .hasAnyAuthority("ADMIN", "EMPLOYEE")
+            .hasAuthority("EMPLOYEE")
 
             // =====================================================
             // ME ENDPOINTS
@@ -165,6 +167,11 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.GET, "/care-teams/*/clients").hasAnyAuthority("ADMIN", "EMPLOYEE")
             .requestMatchers(HttpMethod.GET, "/care-teams/*/employees").hasAnyAuthority("ADMIN", "EMPLOYEE")
 
+            // employees verplaatsen: ADMIN only (UPDATE)
+            .requestMatchers(HttpMethod.PUT, "/care-teams/*/employees/*/move/*").hasAuthority("ADMIN")
+
+            // clients verplaatsen: ADMIN + EMPLOYEE (UPDATE)
+            .requestMatchers(HttpMethod.PUT, "/care-teams/*/clients/*/move/*").hasAnyAuthority("ADMIN", "EMPLOYEE")
             // Care teams CRUD
             .requestMatchers(HttpMethod.POST, "/care-teams").hasAuthority("ADMIN")
             .requestMatchers(HttpMethod.PUT, "/care-teams/*").hasAuthority("ADMIN")

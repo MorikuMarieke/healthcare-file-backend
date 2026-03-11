@@ -45,6 +45,10 @@ public class ClientProfile {
     @OneToOne(mappedBy = "clientProfile", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private CarePlan carePlan;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "care_team_id", nullable = false)
+    private CareTeam careTeam;
+
     public ClientProfile() {
     }
 
@@ -129,4 +133,11 @@ public class ClientProfile {
         this.contactDetails = contactDetails;
     }
 
+    public CareTeam getCareTeam() {
+        return careTeam;
+    }
+
+    public void setCareTeam(CareTeam careTeam) {
+        this.careTeam = careTeam;
+    }
 }

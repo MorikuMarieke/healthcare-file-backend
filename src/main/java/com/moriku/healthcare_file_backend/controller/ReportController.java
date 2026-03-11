@@ -41,7 +41,10 @@ public class ReportController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ReportResponse> update(@PathVariable Long id, @RequestBody ReportUpdateRequest request) {
+    public ResponseEntity<ReportResponse> update(
+        @PathVariable Long id,
+        @Valid @RequestBody ReportUpdateRequest request
+    ) {
         return ResponseEntity.ok(reportService.update(id, request));
     }
 
