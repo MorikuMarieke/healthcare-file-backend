@@ -147,6 +147,9 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.PATCH, "/me/password")
             .authenticated()
 
+            .requestMatchers(HttpMethod.GET, "/me/care-plan/goals/**")
+            .hasAuthority("CLIENT")
+
             .requestMatchers("/me/**")
             .authenticated()
 

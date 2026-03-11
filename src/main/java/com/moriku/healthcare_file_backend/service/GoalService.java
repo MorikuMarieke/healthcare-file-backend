@@ -117,4 +117,14 @@ public class GoalService {
                 "evaluationDate must be in the future");
         }
     }
+
+    public List<GoalResponse> getMyGoals() {
+        Long clientProfileId = meService.getActiveClientProfileForCurrentClientOrThrow().getId();
+        return getAll(clientProfileId);
+    }
+
+    public GoalResponse getMyGoalById(Long goalId) {
+        Long clientProfileId = meService.getActiveClientProfileForCurrentClientOrThrow().getId();
+        return getOne(clientProfileId, goalId);
+    }
 }
