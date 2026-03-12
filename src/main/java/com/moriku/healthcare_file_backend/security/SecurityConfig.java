@@ -45,6 +45,8 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
             .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
             .requestMatchers(HttpMethod.POST, "/auth/invite/accept").permitAll()
+            .requestMatchers("/error").permitAll()
+            .requestMatchers("/error/**").permitAll()
 
             // ---- Users (ADMIN only) ----
             .requestMatchers(HttpMethod.POST, "/users").hasAuthority("ADMIN")
@@ -103,42 +105,84 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.PATCH, "/employee-profiles/**")
             .hasAnyAuthority("ADMIN", "EMPLOYEE")
 
-            // ---- Me endpoints ----
+            // =====================================================
+            // REPORTS
+            // =====================================================
+            // Staff mag reports overzicht lezen
+            .requestMatchers(HttpMethod.GET, "/reports")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
+
+            // Staff mag reports lezen per careplan
+            .requestMatchers(HttpMethod.GET, "/reports/care-plans/*")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
+
+            // Staff mag reports lezen (overzicht + detail)
+            .requestMatchers(HttpMethod.GET, "/reports/*")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
+
+            // Staff mag reports aanmaken
+            .requestMatchers(HttpMethod.POST, "/reports/**")
+            .hasAuthority("EMPLOYEE")
+
+            .requestMatchers(HttpMethod.PUT, "/reports/**")
+            .hasAuthority("EMPLOYEE")
+
+            .requestMatchers(HttpMethod.DELETE, "/reports/**")
+            .hasAuthority("EMPLOYEE")
+
+            // =====================================================
+            // ME ENDPOINTS
+            // =====================================================
+
             .requestMatchers(HttpMethod.GET, "/me/client-profile")
             .hasAuthority("CLIENT")
 
             .requestMatchers(HttpMethod.GET, "/me/employee-profile")
             .hasAnyAuthority("EMPLOYEE", "ADMIN")
 
+            // Me reports (CLIENT only) - must be before /me/**
+            .requestMatchers(HttpMethod.GET, "/me/reports/**")
+            .hasAuthority("CLIENT")
+
             .requestMatchers(HttpMethod.PATCH, "/me/password")
             .authenticated()
+
+            .requestMatchers(HttpMethod.GET, "/me/care-plan/goals/**")
+            .hasAuthority("CLIENT")
 
             .requestMatchers("/me/**")
             .authenticated()
 
-            // ---- Care teams ----
-// ---- Care team links ----
-// clients koppelen: ADMIN + EMPLOYEE
-                .requestMatchers(HttpMethod.POST, "/care-teams/*/clients/*").hasAnyAuthority("ADMIN", "EMPLOYEE")
-                .requestMatchers(HttpMethod.DELETE, "/care-teams/*/clients/*").hasAnyAuthority("ADMIN", "EMPLOYEE")
-//TODO: in verslag zetten dat idealiter alleen clienten kunnen worden toegevoegd aan team waar employee lid van is, maar dat is object level authorization en wil ik voor nu even niet aan opdracht toevoegen, maar zou wel een realistisch scenario zijn voor de toekomst.
+            // =====================================================
+            // CARE TEAMS
+            // =====================================================
 
-// employees koppelen: ADMIN only
-                .requestMatchers(HttpMethod.POST, "/care-teams/*/employees/*").hasAuthority("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/care-teams/*/employees/*").hasAuthority("ADMIN")
+            // clients koppelen: ADMIN + EMPLOYEE
+            .requestMatchers(HttpMethod.POST, "/care-teams/*/clients/*").hasAnyAuthority("ADMIN", "EMPLOYEE")
+            .requestMatchers(HttpMethod.DELETE, "/care-teams/*/clients/*").hasAnyAuthority("ADMIN", "EMPLOYEE")
+            //TODO: in verslag zetten dat idealiter alleen clienten kunnen worden toegevoegd aan team waar employee lid van is, maar dat is object level authorization en wil ik voor nu even niet aan opdracht toevoegen, maar zou wel een realistisch scenario zijn voor de toekomst.
 
-// links bekijken: ADMIN + EMPLOYEE (of alleen ADMIN als je wil)
-                .requestMatchers(HttpMethod.GET, "/care-teams/*/clients").hasAnyAuthority("ADMIN", "EMPLOYEE")
-                .requestMatchers(HttpMethod.GET, "/care-teams/*/employees").hasAnyAuthority("ADMIN", "EMPLOYEE")
+            // employees koppelen: ADMIN only
+            .requestMatchers(HttpMethod.POST, "/care-teams/*/employees/*").hasAuthority("ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/care-teams/*/employees/*").hasAuthority("ADMIN")
 
-// ---- Care teams CRUD ----
-                .requestMatchers(HttpMethod.POST, "/care-teams").hasAuthority("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/care-teams/*").hasAuthority("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/care-teams/*").hasAuthority("ADMIN")
+            // links bekijken: ADMIN + EMPLOYEE (of alleen ADMIN als je wil)
+            .requestMatchers(HttpMethod.GET, "/care-teams/*/clients").hasAnyAuthority("ADMIN", "EMPLOYEE")
+            .requestMatchers(HttpMethod.GET, "/care-teams/*/employees").hasAnyAuthority("ADMIN", "EMPLOYEE")
 
-// GET teams (list + detail) voor staff
-                .requestMatchers(HttpMethod.GET, "/care-teams").hasAnyAuthority("ADMIN", "EMPLOYEE")
-                .requestMatchers(HttpMethod.GET, "/care-teams/*").hasAnyAuthority("ADMIN", "EMPLOYEE")
+            // employees verplaatsen: ADMIN only (UPDATE)
+            .requestMatchers(HttpMethod.PUT, "/care-teams/*/employees/*/move/*").hasAuthority("ADMIN")
+
+            // clients verplaatsen: ADMIN + EMPLOYEE (UPDATE)
+            .requestMatchers(HttpMethod.PUT, "/care-teams/*/clients/*/move/*").hasAnyAuthority("ADMIN", "EMPLOYEE")
+            // Care teams CRUD
+            .requestMatchers(HttpMethod.POST, "/care-teams").hasAuthority("ADMIN")
+            .requestMatchers(HttpMethod.PUT, "/care-teams/*").hasAuthority("ADMIN")
+            .requestMatchers(HttpMethod.DELETE, "/care-teams/*").hasAuthority("ADMIN")
+
+            // GET teams (list + detail) voor staff
+            .requestMatchers(HttpMethod.GET, "/care-teams").hasAnyAuthority("ADMIN", "EMPLOYEE")
+            .requestMatchers(HttpMethod.GET, "/care-teams/*").hasAnyAuthority("ADMIN", "EMPLOYEE")
 
             // ---- Everything else requires authentication ----
             .anyRequest().authenticated()

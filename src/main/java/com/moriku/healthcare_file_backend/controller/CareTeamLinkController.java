@@ -50,4 +50,22 @@ public class CareTeamLinkController {
     public List<CareTeamClientResponse> getClients(@PathVariable Long teamId) {
         return service.getAllTeamClients(teamId);
     }
+
+    @PutMapping("/{fromTeamId}/employees/{employeeId}/move/{toTeamId}")
+    public CareTeamMemberResponse moveMember(
+        @PathVariable Long fromTeamId,
+        @PathVariable Long employeeId,
+        @PathVariable Long toTeamId
+    ) {
+        return service.moveMember(fromTeamId, employeeId, toTeamId);
+    }
+
+    @PutMapping("/{fromTeamId}/clients/{clientId}/move/{toTeamId}")
+    public CareTeamClientResponse moveClient(
+        @PathVariable Long fromTeamId,
+        @PathVariable Long clientId,
+        @PathVariable Long toTeamId
+    ) {
+        return service.moveClient(fromTeamId, clientId, toTeamId);
+    }
 }

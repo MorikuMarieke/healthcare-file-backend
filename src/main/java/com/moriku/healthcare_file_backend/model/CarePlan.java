@@ -2,6 +2,7 @@ package com.moriku.healthcare_file_backend.model;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -24,7 +25,10 @@ public class CarePlan {
     private String notes = "";
 
     @OneToMany(mappedBy = "carePlan", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Goal> goals = new java.util.ArrayList<>();
+    private List<Goal> goals = new ArrayList<>();
+
+    @OneToMany(mappedBy = "carePlan", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Report> reports = new ArrayList<>();
 
     public CarePlan() {
     }
@@ -65,5 +69,9 @@ public class CarePlan {
 
     public List<Goal> getGoals() {
         return goals;
+    }
+
+    public List<Report> getReports() {
+        return reports;
     }
 }

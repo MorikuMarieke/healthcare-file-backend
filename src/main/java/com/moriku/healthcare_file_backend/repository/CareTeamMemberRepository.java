@@ -13,6 +13,8 @@ public interface CareTeamMemberRepository extends JpaRepository<CareTeamMember, 
 
     boolean existsByCareTeamIdAndEmployeeProfileId(Long careTeamId, Long employeeProfileId);
 
+    List<CareTeamMember> findAllByEmployeeProfileId(Long employeeProfileId);
+
     Optional<CareTeamMember> findByCareTeamIdAndEmployeeProfileId(Long careTeamId, Long employeeProfileId);
 
     void deleteByCareTeamIdAndEmployeeProfileId(Long careTeamId, Long employeeProfileId);

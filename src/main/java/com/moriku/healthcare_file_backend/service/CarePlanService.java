@@ -15,11 +15,9 @@ import org.springframework.web.server.ResponseStatusException;
 public class CarePlanService {
 
     private final CarePlanRepository carePlanRepository;
-    private final ClientProfileRepository clientProfileRepository;
 
-    public CarePlanService(CarePlanRepository carePlanRepository, ClientProfileRepository clientProfileRepository) {
+    public CarePlanService(CarePlanRepository carePlanRepository) {
         this.carePlanRepository = carePlanRepository;
-        this.clientProfileRepository = clientProfileRepository;
     }
 
     @Transactional(readOnly = true)
