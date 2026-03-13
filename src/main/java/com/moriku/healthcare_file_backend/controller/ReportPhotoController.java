@@ -40,8 +40,9 @@ public class ReportPhotoController {
         return reportPhotoService.getAllPhotosForReport(reportId);
     }
 
-    @GetMapping("/photos/{photoId}/content")
+    @GetMapping("/{reportId}/photos/{photoId}/content")
     public ResponseEntity<byte[]> getPhotoContent(
+        @PathVariable Long reportId,
         @PathVariable Long photoId
     ) {
         ReportPhoto photo = reportPhotoService.getReportPhotoById(photoId);
@@ -52,8 +53,9 @@ public class ReportPhotoController {
             .body(photo.getData());
     }
 
-    @DeleteMapping("/photos/{photoId}")
+    @DeleteMapping("/{reportId}/photos/{photoId}")
     public void deletePhoto(
+        @PathVariable Long reportId,
         @PathVariable Long photoId
     ) {
         reportPhotoService.deleteReportPhotoById(photoId);

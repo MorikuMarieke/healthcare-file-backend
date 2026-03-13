@@ -2,6 +2,8 @@ package com.moriku.healthcare_file_backend.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "reports")
@@ -30,6 +32,14 @@ public class Report {
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "author_employee_id", nullable = false, updatable = false)
     private EmployeeProfile author;
+
+    @OneToMany(
+        mappedBy = "report",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true,
+        fetch = FetchType.LAZY
+    )
+    private List<ReportPhoto> photos = new ArrayList<>();
 
     protected Report() {
     }
@@ -87,5 +97,9 @@ public class Report {
 
     public void setText(String text) {
         this.text = text;
+    }
+
+    public List<ReportPhoto> getPhotos() {
+        return photos;
     }
 }

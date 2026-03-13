@@ -2,16 +2,18 @@ package com.moriku.healthcare_file_backend.service;
 
 import com.moriku.healthcare_file_backend.dto.report_photo.ReportPhotoResponse;
 import com.moriku.healthcare_file_backend.mapper.ReportPhotoMapper;
+import com.moriku.healthcare_file_backend.model.CarePlan;
 import com.moriku.healthcare_file_backend.model.EmployeeProfile;
 import com.moriku.healthcare_file_backend.model.Report;
 import com.moriku.healthcare_file_backend.model.ReportPhoto;
 import com.moriku.healthcare_file_backend.model.User;
+import com.moriku.healthcare_file_backend.repository.CareTeamMemberRepository;
 import com.moriku.healthcare_file_backend.repository.ReportPhotoRepository;
 import com.moriku.healthcare_file_backend.repository.ReportRepository;
 import com.moriku.healthcare_file_backend.security.SecurityContextService;
-import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -26,19 +28,30 @@ public class ReportPhotoServiceImpl implements ReportPhotoService {
 
     private final ReportPhotoRepository reportPhotoRepository;
     private final ReportRepository reportRepository;
+    private final CareTeamMemberRepository careTeamMemberRepository;
     private final SecurityContextService securityContextService;
+    private final CarePlanService carePlanService;
 
-    public ReportPhotoServiceImpl(ReportPhotoRepository reportPhotoRepository, ReportRepository reportRepository, SecurityContextService securityContextService) {
+    public ReportPhotoServiceImpl(
+        ReportPhotoRepository reportPhotoRepository,
+        ReportRepository reportRepository,
+        CareTeamMemberRepository careTeamMemberRepository,
+        SecurityContextService securityContextService,
+        CarePlanService carePlanService
+    ) {
         this.reportPhotoRepository = reportPhotoRepository;
         this.reportRepository = reportRepository;
+        this.careTeamMemberRepository = careTeamMemberRepository;
         this.securityContextService = securityContextService;
+        this.carePlanService = carePlanService;
     }
 
     @Override
     @Transactional
     public ReportPhotoResponse uploadPhotoToReport(Long reportId, MultipartFile file) {
         Report report = getReportByIdOrThrow(reportId);
-        validateStaffAccessToReport(report);
+
+        validateReportPhotoUploadAccess(report);
         validateUploadFile(file);
         validatePhotoLimit(reportId);
 
@@ -60,9 +73,10 @@ public class ReportPhotoServiceImpl implements ReportPhotoService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ReportPhotoResponse> getAllPhotosForReport(Long reportId) {
-        Report report = getReportByIdOrThrow(reportId);
-        validateStaffAccessToReport(report);
+        getReportByIdOrThrow(reportId);
+        validateStaffReadAccess();
 
         List<ReportPhoto> reportPhotos = reportPhotoRepository.findAllByReportIdOrderByUploadedAtAsc(reportId);
         return ReportPhotoMapper.toResponseList(reportPhotos);
@@ -71,7 +85,7 @@ public class ReportPhotoServiceImpl implements ReportPhotoService {
     @Override
     public ReportPhoto getReportPhotoById(Long photoId) {
         ReportPhoto reportPhoto = getReportPhotoByIdOrThrow(photoId);
-        validateStaffAccessToReport(reportPhoto.getReport());
+        validateStaffReadAccess();
         return reportPhoto;
     }
 
@@ -79,9 +93,26 @@ public class ReportPhotoServiceImpl implements ReportPhotoService {
     @Transactional
     public void deleteReportPhotoById(Long photoId) {
         ReportPhoto reportPhoto = getReportPhotoByIdOrThrow(photoId);
-        validateStaffAccessToReport(reportPhoto.getReport());
+        validateReportAuthorAccess(reportPhoto.getReport());
 
         reportPhotoRepository.delete(reportPhoto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ReportPhotoResponse> getMyPhotosForReport(Long reportId) {
+        Report report = getMyReportOrThrow(reportId);
+
+        List<ReportPhoto> reportPhotos = reportPhotoRepository.findAllByReportIdOrderByUploadedAtAsc(report.getId());
+        return ReportPhotoMapper.toResponseList(reportPhotos);
+    }
+
+    @Override
+    public ReportPhoto getMyReportPhotoById(Long reportId, Long photoId) {
+        Report report = getMyReportOrThrow(reportId);
+
+        return reportPhotoRepository.findByIdAndReportId(photoId, report.getId())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Report photo not found."));
     }
 
     private Report getReportByIdOrThrow(Long reportId) {
@@ -94,13 +125,22 @@ public class ReportPhotoServiceImpl implements ReportPhotoService {
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Report photo not found."));
     }
 
+    private Report getMyReportOrThrow(Long reportId) {
+        CarePlan myCarePlan = carePlanService.getMyCarePlanEntityOrThrow();
+
+        return reportRepository.findByIdAndCarePlanId(reportId, myCarePlan.getId())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Report not found."));
+    }
+
     private void validateUploadFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File is required.");
         }
 
-        if (file.getContentType() == null || !file.getContentType().startsWith("image/")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only image files are allowed.");
+        String contentType = file.getContentType();
+        if (contentType == null
+            || (!contentType.equals("image/jpeg") && !contentType.equals("image/png"))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only JPEG and PNG images are allowed.");
         }
 
         if (file.getOriginalFilename() == null || file.getOriginalFilename().isBlank()) {
@@ -116,20 +156,44 @@ public class ReportPhotoServiceImpl implements ReportPhotoService {
         }
     }
 
-    private void validateStaffAccessToReport(Report report) {
+    private void validateStaffReadAccess() {
         User currentUser = securityContextService.getCurrentUserOrThrow();
 
-        if (currentUser.isAdmin()) {
+        if (currentUser.isAdmin() || currentUser.isEmployee()) {
             return;
         }
 
+        throw new ResponseStatusException(
+            HttpStatus.FORBIDDEN,
+            "Only ADMIN or EMPLOYEE can view report photos."
+        );
+    }
+
+    private void validateReportPhotoUploadAccess(Report report) {
+        EmployeeProfile currentEmployee = securityContextService.getCurrentEmployeeProfileOrThrow();
+
+        assertEmployeeHasAccessToReportClientOrThrow(currentEmployee, report);
+        validateReportAuthorAccess(report);
+    }
+
+    private void validateReportAuthorAccess(Report report) {
         EmployeeProfile currentEmployee = securityContextService.getCurrentEmployeeProfileOrThrow();
 
         if (!report.getAuthor().getId().equals(currentEmployee.getId())) {
             throw new ResponseStatusException(
                 HttpStatus.FORBIDDEN,
-                "You are not the author of this report"
+                "You are not the author of this report."
             );
+        }
+    }
+
+    private void assertEmployeeHasAccessToReportClientOrThrow(EmployeeProfile employee, Report report) {
+        Long careTeamId = report.getCarePlan().getClientProfile().getCareTeam().getId();
+
+        boolean allowed = careTeamMemberRepository.existsByCareTeamIdAndEmployeeProfileId(careTeamId, employee.getId());
+
+        if (!allowed) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No access to this client.");
         }
     }
 }

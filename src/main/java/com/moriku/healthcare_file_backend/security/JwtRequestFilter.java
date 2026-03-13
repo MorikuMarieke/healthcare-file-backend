@@ -79,6 +79,9 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
             chain.doFilter(request, response);
         } catch (Exception ex) {
+            System.out.println("JWT FILTER ERROR: " + ex.getClass().getName() + " - " + ex.getMessage());
+            ex.printStackTrace();
+
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
             response.getWriter().write("{\"message\":\"Invalid token\"}");

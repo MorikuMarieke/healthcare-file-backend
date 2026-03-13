@@ -15,4 +15,8 @@ public interface ReportPhotoService {
     ReportPhoto getReportPhotoById(Long photoId);
 
     void deleteReportPhotoById(Long photoId);
+
+    List<ReportPhotoResponse> getMyPhotosForReport(Long reportId);
+
+    ReportPhoto getMyReportPhotoById(Long reportId, Long photoId);
 }

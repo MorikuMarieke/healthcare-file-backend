@@ -108,6 +108,17 @@ public class SecurityConfig {
             // =====================================================
             // REPORTS
             // =====================================================
+
+            // Staff en admin mag report photos inzien
+            .requestMatchers(HttpMethod.GET, "/reports/*/photos")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
+            // Staff en admin mag singe photo content inzien
+            .requestMatchers(HttpMethod.GET, "/reports/*/photos/*/content")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
+            // Staff en admin mag single photo ophalen
+            .requestMatchers(HttpMethod.GET, "/reports/*/photos/*")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
+
             // Staff mag reports overzicht lezen
             .requestMatchers(HttpMethod.GET, "/reports")
             .hasAnyAuthority("ADMIN", "EMPLOYEE")
@@ -133,22 +144,23 @@ public class SecurityConfig {
             // =====================================================
             // ME ENDPOINTS
             // =====================================================
-
             .requestMatchers(HttpMethod.GET, "/me/client-profile")
+            .hasAuthority("CLIENT")
+
+            .requestMatchers(HttpMethod.GET, "/me/care-plan")
             .hasAuthority("CLIENT")
 
             .requestMatchers(HttpMethod.GET, "/me/employee-profile")
             .hasAnyAuthority("EMPLOYEE", "ADMIN")
 
-            // Me reports (CLIENT only) - must be before /me/**
             .requestMatchers(HttpMethod.GET, "/me/reports/**")
+            .hasAuthority("CLIENT")
+
+            .requestMatchers(HttpMethod.GET, "/me/care-plan/goals/**")
             .hasAuthority("CLIENT")
 
             .requestMatchers(HttpMethod.PATCH, "/me/password")
             .authenticated()
-
-            .requestMatchers(HttpMethod.GET, "/me/care-plan/goals/**")
-            .hasAuthority("CLIENT")
 
             .requestMatchers("/me/**")
             .authenticated()
@@ -160,7 +172,6 @@ public class SecurityConfig {
             // clients koppelen: ADMIN + EMPLOYEE
             .requestMatchers(HttpMethod.POST, "/care-teams/*/clients/*").hasAnyAuthority("ADMIN", "EMPLOYEE")
             .requestMatchers(HttpMethod.DELETE, "/care-teams/*/clients/*").hasAnyAuthority("ADMIN", "EMPLOYEE")
-            //TODO: in verslag zetten dat idealiter alleen clienten kunnen worden toegevoegd aan team waar employee lid van is, maar dat is object level authorization en wil ik voor nu even niet aan opdracht toevoegen, maar zou wel een realistisch scenario zijn voor de toekomst.
 
             // employees koppelen: ADMIN only
             .requestMatchers(HttpMethod.POST, "/care-teams/*/employees/*").hasAuthority("ADMIN")
