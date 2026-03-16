@@ -83,6 +83,7 @@ public class ReportPhotoServiceImpl implements ReportPhotoService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ReportPhoto getReportPhotoById(Long photoId) {
         ReportPhoto reportPhoto = getReportPhotoByIdOrThrow(photoId);
         validateStaffReadAccess();
@@ -108,6 +109,7 @@ public class ReportPhotoServiceImpl implements ReportPhotoService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ReportPhoto getMyReportPhotoById(Long reportId, Long photoId) {
         Report report = getMyReportOrThrow(reportId);
 
