@@ -24,6 +24,9 @@ public class CarePlan {
     @Column(nullable = false, length = 2000)
     private String notes = "";
 
+    @Column(nullable = false, length = 5000)
+    private String medicalHistory = "";
+
     @OneToMany(mappedBy = "carePlan", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Goal> goals = new ArrayList<>();
 
@@ -65,6 +68,14 @@ public class CarePlan {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public String getMedicalHistory() {
+        return medicalHistory;
+    }
+
+    public void setMedicalHistory(String medicalHistory) {
+        this.medicalHistory = medicalHistory;
     }
 
     public List<Goal> getGoals() {

@@ -2,16 +2,15 @@ package com.moriku.healthcare_file_backend.controller;
 
 import com.moriku.healthcare_file_backend.dto.care_plan.CarePlanResponse;
 import com.moriku.healthcare_file_backend.dto.client_profile.ClientProfileResponse;
+import com.moriku.healthcare_file_backend.dto.client_profile.ContactDetailsResponse;
 import com.moriku.healthcare_file_backend.dto.employee_profile.EmployeeProfileResponse;
+import com.moriku.healthcare_file_backend.dto.goal.GoalResponse;
 import com.moriku.healthcare_file_backend.dto.report.ReportResponse;
 import com.moriku.healthcare_file_backend.dto.report_photo.ReportPhotoResponse;
 import com.moriku.healthcare_file_backend.dto.user.UserPasswordChangeRequest;
 import com.moriku.healthcare_file_backend.dto.user.UserResponse;
 import com.moriku.healthcare_file_backend.model.ReportPhoto;
-import com.moriku.healthcare_file_backend.service.CarePlanService;
-import com.moriku.healthcare_file_backend.service.MeService;
-import com.moriku.healthcare_file_backend.service.ReportPhotoService;
-import com.moriku.healthcare_file_backend.service.ReportService;
+import com.moriku.healthcare_file_backend.service.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -27,17 +26,21 @@ public class MeController {
     private final CarePlanService carePlanService;
     private final ReportService reportService;
     private final ReportPhotoService reportPhotoService;
+    private final ClientProfileService clientProfileService;
+    private final GoalService goalService;
 
     public MeController(
         MeService meService,
         CarePlanService carePlanService,
         ReportService reportService,
-        ReportPhotoService reportPhotoService
-    ) {
+        ReportPhotoService reportPhotoService,
+        ClientProfileService clientProfileService, GoalService goalService) {
         this.meService = meService;
         this.carePlanService = carePlanService;
         this.reportService = reportService;
         this.reportPhotoService = reportPhotoService;
+        this.clientProfileService = clientProfileService;
+        this.goalService = goalService;
     }
 
     @GetMapping
@@ -55,27 +58,43 @@ public class MeController {
         return meService.getMyEmployeeProfile();
     }
 
-    @GetMapping("/care-plan")
+    @GetMapping("/client-profile/contact-details")
+    public ContactDetailsResponse getMyContactDetails()
+    {
+        return clientProfileService.getMyContactDetails();
+    }
+
+    @GetMapping("client-profile/care-plan")
     public CarePlanResponse getMyCarePlan() {
         return carePlanService.getMyCarePlan();
     }
 
-    @GetMapping("/reports")
+    @GetMapping("client-profile/care-plan/goals")
+    public List<GoalResponse> getMyGoals() {
+        return goalService.getMyGoals();
+    }
+
+    @GetMapping("client-profile/care-plan/goals/{goalId}")
+    public GoalResponse getMyGoalById(@PathVariable Long goalId) {
+        return goalService.getMyGoalById(goalId);
+    }
+
+    @GetMapping("client-profile/care-plan/reports")
     public List<ReportResponse> getMyReports() {
         return reportService.getMyReports();
     }
 
-    @GetMapping("/reports/{reportId}")
+    @GetMapping("client-profile/care-plan/reports/{reportId}")
     public ReportResponse getMyReportById(@PathVariable Long reportId) {
         return reportService.getMyReportById(reportId);
     }
 
-    @GetMapping("/reports/{reportId}/photos")
+    @GetMapping("client-profile/care-plan/reports/{reportId}/photos")
     public List<ReportPhotoResponse> getMyPhotosForReport(@PathVariable Long reportId) {
         return reportPhotoService.getMyPhotosForReport(reportId);
     }
 
-    @GetMapping("/reports/{reportId}/photos/{photoId}/content")
+    @GetMapping("client-profile/care-plan/reports/{reportId}/photos/{photoId}/content")
     public ResponseEntity<byte[]> getMyPhotoContent(
         @PathVariable Long reportId,
         @PathVariable Long photoId

@@ -48,10 +48,17 @@ public class ClientProfileController {
         clientProfileService.deleteClientProfile(id);
     }
 
+    @GetMapping("/{id}/contact-details")
+    public ContactDetailsResponse getContactDetails(@PathVariable Long id) {
+        return clientProfileService.getContactDetailsByClientProfileId(id);
+    }
+
     @PatchMapping("/{id}/contact-details")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void patchContactDetails(@PathVariable Long id, @Valid @RequestBody ContactDetailsPatchRequest req) {
-        clientProfileService.patchContactEmail(id, req.getEmail());
+    public ContactDetailsResponse patchContactDetails(
+        @PathVariable Long id,
+        @Valid @RequestBody ContactDetailsPatchRequest req
+    ) {
+        return clientProfileService.patchContactDetails(id, req);
     }
 
     @PatchMapping("/{id}/active")
@@ -60,7 +67,5 @@ public class ClientProfileController {
                                        @Valid @RequestBody ClientProfileStatusRequest request) {
         clientProfileService.setClientProfileActive(id, request);
     }
-//
-//    @GetMapping("/id/contact-details")
-//    public
+
 }

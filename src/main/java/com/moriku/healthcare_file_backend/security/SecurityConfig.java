@@ -65,6 +65,13 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.PATCH, "/client-profiles/*/care-plan")
             .hasAnyAuthority("ADMIN", "EMPLOYEE")
 
+            // ---- Contact details via client profile ----
+            .requestMatchers(HttpMethod.GET, "/client-profiles/*/contact-details")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
+
+            .requestMatchers(HttpMethod.PATCH, "/client-profiles/*/contact-details")
+            .hasAnyAuthority("ADMIN", "EMPLOYEE")
+
             // ---- Goals via client profile ----
             .requestMatchers(HttpMethod.POST, "/client-profiles/*/care-plan/goals")
             .hasAnyAuthority("ADMIN", "EMPLOYEE")
@@ -144,20 +151,27 @@ public class SecurityConfig {
             // =====================================================
             // ME ENDPOINTS
             // =====================================================
+
+            .requestMatchers(HttpMethod.GET, "/me")
+            .authenticated()
+
             .requestMatchers(HttpMethod.GET, "/me/client-profile")
             .hasAuthority("CLIENT")
 
-            .requestMatchers(HttpMethod.GET, "/me/care-plan")
+            .requestMatchers(HttpMethod.GET, "/me/client-profile/contact-details")
+            .hasAuthority("CLIENT")
+
+            .requestMatchers(HttpMethod.GET, "/me/client-profile/care-plan")
+            .hasAuthority("CLIENT")
+
+            .requestMatchers(HttpMethod.GET, "/me/client-profile/care-plan/goals/**")
+            .hasAuthority("CLIENT")
+
+            .requestMatchers(HttpMethod.GET, "/me/client-profile/care-plan/reports/**")
             .hasAuthority("CLIENT")
 
             .requestMatchers(HttpMethod.GET, "/me/employee-profile")
             .hasAnyAuthority("EMPLOYEE", "ADMIN")
-
-            .requestMatchers(HttpMethod.GET, "/me/reports/**")
-            .hasAuthority("CLIENT")
-
-            .requestMatchers(HttpMethod.GET, "/me/care-plan/goals/**")
-            .hasAuthority("CLIENT")
 
             .requestMatchers(HttpMethod.PATCH, "/me/password")
             .authenticated()

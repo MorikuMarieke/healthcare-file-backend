@@ -22,10 +22,14 @@ public class CarePlanController {
     }
 
     @PatchMapping
-    public CarePlanResponse updateNotes(
+    public CarePlanResponse update(
         @PathVariable Long clientProfileId,
         @Valid @RequestBody CarePlanUpdateRequest req
     ) {
-        return carePlanService.updateCarePlanNotesByClientProfileId(clientProfileId, req.getNotes());
+        return carePlanService.updateCarePlanByClientProfileId(
+            clientProfileId,
+            req.getNotes(),
+            req.getMedicalHistory()
+        );
     }
 }
