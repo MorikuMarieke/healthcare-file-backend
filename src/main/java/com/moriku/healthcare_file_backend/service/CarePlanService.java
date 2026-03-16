@@ -4,6 +4,7 @@ import com.moriku.healthcare_file_backend.dto.care_plan.CarePlanResponse;
 import com.moriku.healthcare_file_backend.exception.ResourceNotFoundException;
 import com.moriku.healthcare_file_backend.mapper.CarePlanMapper;
 import com.moriku.healthcare_file_backend.model.CarePlan;
+import com.moriku.healthcare_file_backend.model.ClientProfile;
 import com.moriku.healthcare_file_backend.repository.CarePlanRepository;
 import com.moriku.healthcare_file_backend.repository.ClientProfileRepository;
 import org.springframework.http.HttpStatus;
@@ -15,9 +16,11 @@ import org.springframework.web.server.ResponseStatusException;
 public class CarePlanService {
 
     private final CarePlanRepository carePlanRepository;
+    private final MeService meService;
 
-    public CarePlanService(CarePlanRepository carePlanRepository) {
+    public CarePlanService(CarePlanRepository carePlanRepository, MeService meService) {
         this.carePlanRepository = carePlanRepository;
+        this.meService = meService;
     }
 
     @Transactional(readOnly = true)
@@ -35,6 +38,22 @@ public class CarePlanService {
 
         carePlan.setNotes(notes);
         return CarePlanMapper.toResponse(carePlan);
+    }
+
+    public CarePlanResponse getMyCarePlan() {
+        ClientProfile clientProfile = meService.getActiveClientProfileForCurrentClientOrThrow();
+
+        CarePlan carePlan = carePlanRepository.findByClientProfileId(clientProfile.getId())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "CarePlan not found"));
+
+        return CarePlanMapper.toResponse(carePlan);
+    }
+
+    public CarePlan getMyCarePlanEntityOrThrow() {
+        ClientProfile clientProfile = meService.getActiveClientProfileForCurrentClientOrThrow();
+
+        return carePlanRepository.findByClientProfileId(clientProfile.getId())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "CarePlan not found"));
     }
 
 
