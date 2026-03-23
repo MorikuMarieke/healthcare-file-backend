@@ -1,7 +1,9 @@
 package com.moriku.healthcare_file_backend.security;
 
+import com.moriku.healthcare_file_backend.model.ClientProfile;
 import com.moriku.healthcare_file_backend.model.EmployeeProfile;
 import com.moriku.healthcare_file_backend.model.User;
+import com.moriku.healthcare_file_backend.repository.ClientProfileRepository;
 import com.moriku.healthcare_file_backend.repository.EmployeeProfileRepository;
 import com.moriku.healthcare_file_backend.repository.UserRepository;
 import org.springframework.http.HttpStatus;
@@ -13,11 +15,16 @@ public class SecurityContextService {
 
     private final UserRepository userRepository;
     private final EmployeeProfileRepository employeeProfileRepository;
+    private final ClientProfileRepository clientProfileRepository;
 
-    public SecurityContextService(UserRepository userRepository,
-                                  EmployeeProfileRepository employeeProfileRepository) {
+    public SecurityContextService(
+        UserRepository userRepository,
+        EmployeeProfileRepository employeeProfileRepository,
+        ClientProfileRepository clientProfileRepository
+    ) {
         this.userRepository = userRepository;
         this.employeeProfileRepository = employeeProfileRepository;
+        this.clientProfileRepository = clientProfileRepository;
     }
 
     public User getCurrentUserOrThrow() {
@@ -38,12 +45,40 @@ public class SecurityContextService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only EMPLOYEE/ADMIN can perform this action");
         }
 
-        // bij jou: employeeProfile id == user id (MapsId)
         return employeeProfileRepository.findById(user.getId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee profile not found"));
     }
 
     public Long getCurrentEmployeeIdOrThrow() {
         return getCurrentEmployeeProfileOrThrow().getId();
+    }
+
+    public ClientProfile getCurrentClientProfileOrThrow() {
+        User user = getCurrentUserOrThrow();
+
+        if (!user.isClient()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only CLIENT can perform this action");
+        }
+
+        return clientProfileRepository.findByUserIdAndActiveTrue(user.getId())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client profile not found"));
+    }
+
+    public void assertCurrentEmployeeHasAccessToClientForWriteOrThrow(ClientProfile clientProfile) {
+        User currentUser = getCurrentUserOrThrow();
+
+        if (currentUser.isAdmin()) {
+            return;
+        }
+
+        EmployeeProfile employeeProfile = getCurrentEmployeeProfileOrThrow();
+
+        if (employeeProfile.getCareTeam() == null || clientProfile.getCareTeam() == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No access to this client");
+        }
+
+        if (!employeeProfile.getCareTeam().getId().equals(clientProfile.getCareTeam().getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No write access to this client");
+        }
     }
 }

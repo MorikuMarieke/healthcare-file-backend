@@ -6,6 +6,7 @@ import com.moriku.healthcare_file_backend.mapper.CarePlanMapper;
 import com.moriku.healthcare_file_backend.model.CarePlan;
 import com.moriku.healthcare_file_backend.model.ClientProfile;
 import com.moriku.healthcare_file_backend.repository.CarePlanRepository;
+import com.moriku.healthcare_file_backend.security.SecurityContextService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,10 +17,12 @@ public class CarePlanService {
 
     private final CarePlanRepository carePlanRepository;
     private final MeService meService;
+    private final SecurityContextService securityContextService;
 
-    public CarePlanService(CarePlanRepository carePlanRepository, MeService meService) {
+    public CarePlanService(CarePlanRepository carePlanRepository, MeService meService, SecurityContextService securityContextService) {
         this.carePlanRepository = carePlanRepository;
         this.meService = meService;
+        this.securityContextService = securityContextService;
     }
 
     @Transactional(readOnly = true)
@@ -38,6 +41,8 @@ public class CarePlanService {
 
         CarePlan carePlan = carePlanRepository.findByClientProfileId(clientProfileId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "CarePlan not found"));
+
+        securityContextService.assertCurrentEmployeeHasAccessToClientForWriteOrThrow(carePlan.getClientProfile());
 
         if (notes != null) {
             carePlan.setNotes(notes);

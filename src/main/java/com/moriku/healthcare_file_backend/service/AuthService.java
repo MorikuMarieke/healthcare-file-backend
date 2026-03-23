@@ -90,8 +90,6 @@ public class AuthService {
         User saved = userRepository.save(user);
 
         profile.setUser(saved);
-        // inside @Transactional this is optional if profile is managed
-        // clientProfileRepository.save(profile);
 
         return UserMapper.toResponse(saved);
     }

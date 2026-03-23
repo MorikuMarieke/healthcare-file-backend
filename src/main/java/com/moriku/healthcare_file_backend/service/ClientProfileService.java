@@ -19,6 +19,7 @@ import com.moriku.healthcare_file_backend.repository.CarePlanRepository;
 import com.moriku.healthcare_file_backend.repository.ClientProfileRepository;
 import com.moriku.healthcare_file_backend.repository.EmployeeProfileRepository;
 import com.moriku.healthcare_file_backend.repository.UserRepository;
+import com.moriku.healthcare_file_backend.security.SecurityContextService;
 import com.moriku.healthcare_file_backend.security.SecurityUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -34,17 +35,20 @@ public class ClientProfileService {
     private final UserRepository userRepository;
     private final CarePlanRepository carePlanRepository;
     private final EmployeeProfileRepository employeeProfileRepository;
+    private final SecurityContextService securityContextService;
 
     public ClientProfileService(
         ClientProfileRepository clientProfileRepository,
         UserRepository userRepository,
         CarePlanRepository carePlanRepository,
-        EmployeeProfileRepository employeeProfileRepository
+        EmployeeProfileRepository employeeProfileRepository,
+        SecurityContextService securityContextService
     ) {
         this.clientProfileRepository = clientProfileRepository;
         this.userRepository = userRepository;
         this.carePlanRepository = carePlanRepository;
         this.employeeProfileRepository = employeeProfileRepository;
+        this.securityContextService = securityContextService;
     }
 
     @Transactional
@@ -139,6 +143,8 @@ public class ClientProfileService {
         ClientProfile profile = clientProfileRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("ClientProfile not found with id: " + id));
 
+        securityContextService.assertCurrentEmployeeHasAccessToClientForWriteOrThrow(profile);
+
         if (req.getFirstName() != null && !req.getFirstName().isBlank()) {
             profile.setFirstName(req.getFirstName().trim());
         }
@@ -185,6 +191,8 @@ public class ClientProfileService {
         ClientProfile profile = clientProfileRepository.findById(clientProfileId)
             .orElseThrow(() -> new ResourceNotFoundException("ClientProfile not found with id: " + clientProfileId));
 
+        securityContextService.assertCurrentEmployeeHasAccessToClientForWriteOrThrow(profile);
+
         ContactDetails details = profile.getContactDetails();
         if (details == null) {
             details = new ContactDetails();
@@ -229,10 +237,12 @@ public class ClientProfileService {
 
     @Transactional
     public void setClientProfileActive(Long clientProfileId, ClientProfileStatusRequest dto) {
-        ClientProfile clientProfile = clientProfileRepository.findById(clientProfileId)
+        ClientProfile profile = clientProfileRepository.findById(clientProfileId)
             .orElseThrow(() -> new ResourceNotFoundException("ClientProfile not found with id: " + clientProfileId));
 
-        clientProfile.setActive(Boolean.TRUE.equals(dto.getActive()));
-        clientProfileRepository.save(clientProfile);
+        securityContextService.assertCurrentEmployeeHasAccessToClientForWriteOrThrow(profile);
+
+        profile.setActive(Boolean.TRUE.equals(dto.getActive()));
+        clientProfileRepository.save(profile);
     }
 }
