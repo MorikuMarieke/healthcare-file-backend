@@ -63,14 +63,4 @@ public class GlobalExceptionHandler {
             "message", "Malformed JSON or invalid enum/date format"
         );
     }
-
-
-    // Optional but recommended: bean validation errors (@Valid)
-//    @ExceptionHandler(MethodArgumentNotValidException.class)
-//    @ResponseStatus(HttpStatus.BAD_REQUEST)
-//    public String handleValidation(MethodArgumentNotValidException ex) {
-//        return ex.getBindingResult().getFieldErrors().stream()
-//            .map(err -> err.getField() + ": " + err.getDefaultMessage())
-//            .collect(Collectors.joining(", "));
-//    }
 }
