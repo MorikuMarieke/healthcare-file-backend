@@ -16,9 +16,20 @@ public class ClientProfileResponse {
     private final Long userId;
     private final Sex sex;
     private final LocalDate birthDate;
+    private final Long careTeamId;
 
-    public ClientProfileResponse(Long id, String bsn, String firstName, String lastName, Sex sex, LocalDate birthDate,
-                                 boolean active, Instant createdAt, Long userId) {
+    public ClientProfileResponse(
+        Long id,
+        String bsn,
+        String firstName,
+        String lastName,
+        Sex sex,
+        LocalDate birthDate,
+        boolean active,
+        Instant createdAt,
+        Long userId,
+        Long careTeamId
+    ) {
         this.id = id;
         this.bsn = bsn;
         this.firstName = firstName;
@@ -28,6 +39,7 @@ public class ClientProfileResponse {
         this.active = active;
         this.createdAt = createdAt;
         this.userId = userId;
+        this.careTeamId = careTeamId;
     }
 
     public Long getId() {
@@ -64,5 +76,9 @@ public class ClientProfileResponse {
 
     public LocalDate getBirthDate() {
         return birthDate;
+    }
+
+    public Long getCareTeamId() {
+        return careTeamId;
     }
 }

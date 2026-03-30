@@ -68,4 +68,12 @@ public class ClientProfileController {
         clientProfileService.setClientProfileActive(id, request);
     }
 
+    @PatchMapping("/{id}/care-team/{teamId}")
+    public ClientProfileResponse transferClientToTeam(
+        @PathVariable Long id,
+        @PathVariable Long teamId
+    ) {
+        return clientProfileService.transferClientToTeam(id, teamId);
+    }
+
 }

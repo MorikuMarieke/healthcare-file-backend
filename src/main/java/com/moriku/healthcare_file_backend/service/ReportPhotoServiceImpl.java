@@ -7,7 +7,6 @@ import com.moriku.healthcare_file_backend.model.EmployeeProfile;
 import com.moriku.healthcare_file_backend.model.Report;
 import com.moriku.healthcare_file_backend.model.ReportPhoto;
 import com.moriku.healthcare_file_backend.model.User;
-import com.moriku.healthcare_file_backend.repository.CareTeamMemberRepository;
 import com.moriku.healthcare_file_backend.repository.ReportPhotoRepository;
 import com.moriku.healthcare_file_backend.repository.ReportRepository;
 import com.moriku.healthcare_file_backend.security.SecurityContextService;
@@ -28,20 +27,17 @@ public class ReportPhotoServiceImpl implements ReportPhotoService {
 
     private final ReportPhotoRepository reportPhotoRepository;
     private final ReportRepository reportRepository;
-    private final CareTeamMemberRepository careTeamMemberRepository;
     private final SecurityContextService securityContextService;
     private final CarePlanService carePlanService;
 
     public ReportPhotoServiceImpl(
         ReportPhotoRepository reportPhotoRepository,
         ReportRepository reportRepository,
-        CareTeamMemberRepository careTeamMemberRepository,
         SecurityContextService securityContextService,
         CarePlanService carePlanService
     ) {
         this.reportPhotoRepository = reportPhotoRepository;
         this.reportRepository = reportRepository;
-        this.careTeamMemberRepository = careTeamMemberRepository;
         this.securityContextService = securityContextService;
         this.carePlanService = carePlanService;
     }
@@ -181,7 +177,9 @@ public class ReportPhotoServiceImpl implements ReportPhotoService {
     private void validateReportPhotoUploadAccess(Report report) {
         EmployeeProfile currentEmployee = securityContextService.getCurrentEmployeeProfileOrThrow();
 
-        assertEmployeeBelongsToClientCareTeamOrThrow(currentEmployee, report);
+        securityContextService.assertCurrentEmployeeHasAccessToClientForWriteOrThrow(
+            report.getCarePlan().getClientProfile()
+        );
         assertCurrentEmployeeIsAuthorOrThrow(currentEmployee, report);
     }
 
@@ -191,16 +189,6 @@ public class ReportPhotoServiceImpl implements ReportPhotoService {
                 HttpStatus.FORBIDDEN,
                 "You are not the author of this report."
             );
-        }
-    }
-
-    private void assertEmployeeBelongsToClientCareTeamOrThrow(EmployeeProfile employee, Report report) {
-        Long careTeamId = report.getCarePlan().getClientProfile().getCareTeam().getId();
-
-        boolean allowed = careTeamMemberRepository.existsByCareTeamIdAndEmployeeProfileId(careTeamId, employee.getId());
-
-        if (!allowed) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No access to this client.");
         }
     }
 }

@@ -29,21 +29,15 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final InviteTokenRepository inviteTokenRepository;
-    private final EmployeeProfileRepository employeeProfileRepository;
-    private final ClientAssignmentRepository clientAssignmentRepository;
 
     public UserService(UserRepository userRepository,
                        RoleRepository roleRepository,
                        PasswordEncoder passwordEncoder,
-                       InviteTokenRepository inviteTokenRepository,
-                       EmployeeProfileRepository employeeProfileRepository,
-                       ClientAssignmentRepository clientAssignmentRepository) {
+                       InviteTokenRepository inviteTokenRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.inviteTokenRepository = inviteTokenRepository;
-        this.employeeProfileRepository = employeeProfileRepository;
-        this.clientAssignmentRepository = clientAssignmentRepository;
     }
 
     public List<UserResponse> getAllUsers() {
@@ -136,13 +130,7 @@ public class UserService {
         }
 
         inviteTokenRepository.deleteAllByUser_Id(userId);
-
-        employeeProfileRepository.findById(userId).ifPresent(employeeProfile ->
-            clientAssignmentRepository.deleteAllByEmployeeProfileId(employeeProfile.getId())
-        );
-
         userRepository.delete(user);
     }
-
 
 }

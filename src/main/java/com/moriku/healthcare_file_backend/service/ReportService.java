@@ -11,10 +11,11 @@ import com.moriku.healthcare_file_backend.model.EmployeeProfile;
 import com.moriku.healthcare_file_backend.model.Report;
 import com.moriku.healthcare_file_backend.model.User;
 import com.moriku.healthcare_file_backend.repository.CarePlanRepository;
-import com.moriku.healthcare_file_backend.repository.CareTeamMemberRepository;
 import com.moriku.healthcare_file_backend.repository.ClientProfileRepository;
 import com.moriku.healthcare_file_backend.repository.ReportRepository;
 import com.moriku.healthcare_file_backend.security.SecurityContextService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -30,23 +31,21 @@ import java.util.stream.Collectors;
 @Service
 public class ReportService {
 
+    private static final Logger log = LoggerFactory.getLogger(ReportService.class);
     private final ReportRepository reportRepository;
     private final CarePlanRepository carePlanRepository;
     private final ClientProfileRepository clientProfileRepository;
-    private final CareTeamMemberRepository careTeamMemberRepository;
     private final SecurityContextService securityContextService;
 
     public ReportService(
         ReportRepository reportRepository,
         CarePlanRepository carePlanRepository,
         ClientProfileRepository clientProfileRepository,
-        CareTeamMemberRepository careTeamMemberRepository,
         SecurityContextService securityContextService
     ) {
         this.reportRepository = reportRepository;
         this.carePlanRepository = carePlanRepository;
         this.clientProfileRepository = clientProfileRepository;
-        this.careTeamMemberRepository = careTeamMemberRepository;
         this.securityContextService = securityContextService;
     }
 
@@ -63,7 +62,7 @@ public class ReportService {
 
         ClientProfile clientProfile = carePlan.getClientProfile();
 
-        assertEmployeeHasAccessToClientOrThrow(author, clientProfile);
+        securityContextService.assertCurrentEmployeeHasAccessToClientForWriteOrThrow(clientProfile);
 
         Report report = new Report(request.getTitle(), request.getText(), carePlan, author);
         reportRepository.save(report);
@@ -159,15 +158,6 @@ public class ReportService {
     // =====================================================
     // helpers
     // =====================================================
-
-    private void assertEmployeeHasAccessToClientOrThrow(EmployeeProfile employee, ClientProfile clientProfile) {
-        Long careTeamId = clientProfile.getCareTeam().getId();
-
-        boolean allowed = careTeamMemberRepository.existsByCareTeamIdAndEmployeeProfileId(careTeamId, employee.getId());
-        if (!allowed) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No access to this client");
-        }
-    }
 
     private void assertCurrentEmployeeIsAuthorOrThrow(EmployeeProfile employee, Report report) {
         if (!report.getAuthor().getId().equals(employee.getId())) {

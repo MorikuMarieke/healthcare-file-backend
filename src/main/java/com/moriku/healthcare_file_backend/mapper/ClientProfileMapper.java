@@ -22,6 +22,7 @@ public final class ClientProfileMapper {
 
     public static ClientProfileResponse toResponse(ClientProfile profile) {
         Long userId = profile.getUser() != null ? profile.getUser().getId() : null;
+        Long careTeamId = profile.getCareTeam() != null ? profile.getCareTeam().getId() : null;
 
         return new ClientProfileResponse(
             profile.getId(),
@@ -32,7 +33,8 @@ public final class ClientProfileMapper {
             profile.getBirthDate(),
             profile.isActive(),
             profile.getCreatedAt(),
-            userId
-            );
+            userId,
+            careTeamId
+        );
     }
 }

@@ -16,6 +16,4 @@ public interface ClientProfileRepository extends JpaRepository<ClientProfile, Lo
 
     Optional<ClientProfile> findByUserIdAndActiveTrue(Long userId);
 
-    Optional<EmployeeProfile> findByUser_Id(Long userId);
-
 }

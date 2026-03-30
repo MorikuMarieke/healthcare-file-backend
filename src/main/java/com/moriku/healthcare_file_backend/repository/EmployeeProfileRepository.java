@@ -7,7 +7,5 @@ import java.util.Optional;
 
 public interface EmployeeProfileRepository extends JpaRepository<EmployeeProfile, Long> {
 
-    boolean existsByUser_Id(Long userId);
-
     Optional<EmployeeProfile> findByUser_Id(Long userId);
 }

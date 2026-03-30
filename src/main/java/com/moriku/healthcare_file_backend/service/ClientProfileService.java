@@ -10,15 +10,8 @@ import com.moriku.healthcare_file_backend.exception.ConflictException;
 import com.moriku.healthcare_file_backend.exception.ResourceNotFoundException;
 import com.moriku.healthcare_file_backend.mapper.ClientProfileMapper;
 import com.moriku.healthcare_file_backend.mapper.ContactDetailsMapper;
-import com.moriku.healthcare_file_backend.model.CarePlan;
-import com.moriku.healthcare_file_backend.model.ClientProfile;
-import com.moriku.healthcare_file_backend.model.ContactDetails;
-import com.moriku.healthcare_file_backend.model.EmployeeProfile;
-import com.moriku.healthcare_file_backend.model.User;
-import com.moriku.healthcare_file_backend.repository.CarePlanRepository;
-import com.moriku.healthcare_file_backend.repository.ClientProfileRepository;
-import com.moriku.healthcare_file_backend.repository.EmployeeProfileRepository;
-import com.moriku.healthcare_file_backend.repository.UserRepository;
+import com.moriku.healthcare_file_backend.model.*;
+import com.moriku.healthcare_file_backend.repository.*;
 import com.moriku.healthcare_file_backend.security.SecurityContextService;
 import com.moriku.healthcare_file_backend.security.SecurityUtils;
 import org.springframework.http.HttpStatus;
@@ -36,19 +29,21 @@ public class ClientProfileService {
     private final CarePlanRepository carePlanRepository;
     private final EmployeeProfileRepository employeeProfileRepository;
     private final SecurityContextService securityContextService;
+    private final CareTeamRepository careTeamRepository;
 
     public ClientProfileService(
         ClientProfileRepository clientProfileRepository,
         UserRepository userRepository,
         CarePlanRepository carePlanRepository,
         EmployeeProfileRepository employeeProfileRepository,
-        SecurityContextService securityContextService
+        SecurityContextService securityContextService, CareTeamRepository careTeamRepository
     ) {
         this.clientProfileRepository = clientProfileRepository;
         this.userRepository = userRepository;
         this.carePlanRepository = carePlanRepository;
         this.employeeProfileRepository = employeeProfileRepository;
         this.securityContextService = securityContextService;
+        this.careTeamRepository = careTeamRepository;
     }
 
     @Transactional
@@ -244,5 +239,24 @@ public class ClientProfileService {
 
         profile.setActive(Boolean.TRUE.equals(dto.getActive()));
         clientProfileRepository.save(profile);
+    }
+
+    @Transactional
+    public ClientProfileResponse transferClientToTeam(Long clientProfileId, Long targetTeamId) {
+        ClientProfile clientProfile = clientProfileRepository.findById(clientProfileId)
+            .orElseThrow(() -> new ResourceNotFoundException("ClientProfile not found with id: " + clientProfileId));
+
+        CareTeam targetTeam = careTeamRepository.findById(targetTeamId)
+            .orElseThrow(() -> new ResourceNotFoundException("CareTeam not found with id: " + targetTeamId));
+
+        User currentUser = securityContextService.getCurrentUserOrThrow();
+
+        if (!currentUser.isAdmin()) {
+            securityContextService.assertCurrentEmployeeHasAccessToClientForWriteOrThrow(clientProfile);
+        }
+
+        clientProfile.setCareTeam(targetTeam);
+
+        return ClientProfileMapper.toResponse(clientProfile);
     }
 }

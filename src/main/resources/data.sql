@@ -86,24 +86,24 @@ WHERE r.name = 'CLIENT'
 -- =========================
 INSERT INTO care_teams (team_name, team_phone_number, team_email)
 SELECT
-    'Seed Team A',
+    'Seed Team 1',
     '0612345678',
     'teamA@test.local'
     WHERE NOT EXISTS (
     SELECT 1
     FROM care_teams ct
-    WHERE ct.team_name = 'Seed Team A'
+    WHERE ct.team_name = 'Seed Team 1'
 );
 
 INSERT INTO care_teams (team_name, team_phone_number, team_email)
 SELECT
-    'Seed Team B',
+    'Seed Team 2',
     '0699999999',
     'teamB@test.local'
     WHERE NOT EXISTS (
     SELECT 1
     FROM care_teams ct
-    WHERE ct.team_name = 'Seed Team B'
+    WHERE ct.team_name = 'Seed Team 2'
 );
 
 -- =========================
@@ -128,7 +128,7 @@ SELECT
     '0622222222',
     'employee.personal@test.local'
 FROM users u
-         JOIN care_teams ct ON ct.team_name = 'Seed Team A'
+         JOIN care_teams ct ON ct.team_name = 'Seed Team 1'
 WHERE u.email = 'employee@test.local'
   AND NOT EXISTS (
     SELECT 1
@@ -154,7 +154,7 @@ SELECT
     '0644444444',
     'employee2.personal@test.local'
 FROM users u
-         JOIN care_teams ct ON ct.team_name = 'Seed Team B'
+         JOIN care_teams ct ON ct.team_name = 'Seed Team 2'
 WHERE u.email = 'employee2@test.local'
   AND NOT EXISTS (
     SELECT 1
@@ -180,7 +180,7 @@ SELECT
     '0666666666',
     'employee3.personal@test.local'
 FROM users u
-         JOIN care_teams ct ON ct.team_name = 'Seed Team A'
+         JOIN care_teams ct ON ct.team_name = 'Seed Team 1'
 WHERE u.email = 'employee3@test.local'
   AND NOT EXISTS (
     SELECT 1
@@ -195,34 +195,34 @@ WHERE u.email = 'employee3@test.local'
 -- =========================
 INSERT INTO care_team_members (care_team_id, employee_profile_id)
 SELECT
-    (SELECT ct.id FROM care_teams ct WHERE ct.team_name = 'Seed Team A'),
+    (SELECT ct.id FROM care_teams ct WHERE ct.team_name = 'Seed Team 1'),
     (SELECT ep.user_id FROM employee_profiles ep WHERE ep.personal_email = 'employee.personal@test.local')
     WHERE NOT EXISTS (
     SELECT 1
     FROM care_team_members m
-    WHERE m.care_team_id = (SELECT ct.id FROM care_teams ct WHERE ct.team_name = 'Seed Team A')
+    WHERE m.care_team_id = (SELECT ct.id FROM care_teams ct WHERE ct.team_name = 'Seed Team 1')
       AND m.employee_profile_id = (SELECT ep.user_id FROM employee_profiles ep WHERE ep.personal_email = 'employee.personal@test.local')
 );
 
 INSERT INTO care_team_members (care_team_id, employee_profile_id)
 SELECT
-    (SELECT ct.id FROM care_teams ct WHERE ct.team_name = 'Seed Team B'),
+    (SELECT ct.id FROM care_teams ct WHERE ct.team_name = 'Seed Team 2'),
     (SELECT ep.user_id FROM employee_profiles ep WHERE ep.personal_email = 'employee2.personal@test.local')
     WHERE NOT EXISTS (
     SELECT 1
     FROM care_team_members m
-    WHERE m.care_team_id = (SELECT ct.id FROM care_teams ct WHERE ct.team_name = 'Seed Team B')
+    WHERE m.care_team_id = (SELECT ct.id FROM care_teams ct WHERE ct.team_name = 'Seed Team 2')
       AND m.employee_profile_id = (SELECT ep.user_id FROM employee_profiles ep WHERE ep.personal_email = 'employee2.personal@test.local')
 );
 
 INSERT INTO care_team_members (care_team_id, employee_profile_id)
 SELECT
-    (SELECT ct.id FROM care_teams ct WHERE ct.team_name = 'Seed Team A'),
+    (SELECT ct.id FROM care_teams ct WHERE ct.team_name = 'Seed Team 1'),
     (SELECT ep.user_id FROM employee_profiles ep WHERE ep.personal_email = 'employee3.personal@test.local')
     WHERE NOT EXISTS (
     SELECT 1
     FROM care_team_members m
-    WHERE m.care_team_id = (SELECT ct.id FROM care_teams ct WHERE ct.team_name = 'Seed Team A')
+    WHERE m.care_team_id = (SELECT ct.id FROM care_teams ct WHERE ct.team_name = 'Seed Team 1')
       AND m.employee_profile_id = (SELECT ep.user_id FROM employee_profiles ep WHERE ep.personal_email = 'employee3.personal@test.local')
 );
 
@@ -238,7 +238,7 @@ SELECT
     'FEMALE',
     true,
     NOW(),
-    (SELECT ct.id FROM care_teams ct WHERE ct.team_name = 'Seed Team A')
+    (SELECT ct.id FROM care_teams ct WHERE ct.team_name = 'Seed Team 1')
     WHERE NOT EXISTS (
     SELECT 1
     FROM client_profiles cp
@@ -284,7 +284,7 @@ WHERE cp.bsn = '123456789'
 -- REPORTS
 -- =========================
 
--- employee1 writes 2 reports for Team A client
+-- employee1 writes 2 reports for Team 1 client
 INSERT INTO reports (title, text, created_at, updated_at, care_plan_id, author_employee_id)
 SELECT
     'Intake verslag',

@@ -29,8 +29,8 @@ public class EmployeeProfile {
     @Column(nullable = false)
     private String lastName;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "care_team_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "care_team_id")
     private CareTeam careTeam;
 
     public EmployeeProfile() {
