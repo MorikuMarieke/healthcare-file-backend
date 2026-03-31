@@ -4,10 +4,7 @@ import com.moriku.healthcare_file_backend.dto.client_profile.*;
 import com.moriku.healthcare_file_backend.exception.ConflictException;
 import com.moriku.healthcare_file_backend.exception.ResourceNotFoundException;
 import com.moriku.healthcare_file_backend.model.*;
-import com.moriku.healthcare_file_backend.repository.CarePlanRepository;
-import com.moriku.healthcare_file_backend.repository.ClientProfileRepository;
-import com.moriku.healthcare_file_backend.repository.EmployeeProfileRepository;
-import com.moriku.healthcare_file_backend.repository.UserRepository;
+import com.moriku.healthcare_file_backend.repository.*;
 import com.moriku.healthcare_file_backend.security.SecurityContextService;
 import com.moriku.healthcare_file_backend.security.SecurityUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +44,9 @@ class ClientProfileServiceTest {
 
     @InjectMocks
     private ClientProfileService clientProfileService;
+
+    @Mock
+    private CareTeamRepository careTeamRepository;
 
     private ClientProfile clientProfile;
     private User user;
@@ -401,5 +401,83 @@ class ClientProfileServiceTest {
                 () -> clientProfileService.getMyClientProfile()
             );
         }
+    }
+
+    @Test
+    void transferClientToTeam_shouldTransferWhenCurrentUserIsAdmin() {
+        CareTeam currentTeam = new CareTeam("Team A", "0611111111", "a@test.local");
+        CareTeam targetTeam = new CareTeam("Team B", "0622222222", "b@test.local");
+
+        clientProfile.setCareTeam(currentTeam);
+
+        User adminUser = new User();
+        Role adminRole = new Role("ADMIN");
+        adminUser.setRole(adminRole);
+
+        when(clientProfileRepository.findById(1L)).thenReturn(Optional.of(clientProfile));
+        when(careTeamRepository.findById(2L)).thenReturn(Optional.of(targetTeam));
+        when(securityContextService.getCurrentUserOrThrow()).thenReturn(adminUser);
+
+        ClientProfileResponse result = clientProfileService.transferClientToTeam(1L, 2L);
+
+        assertNotNull(result);
+        assertEquals(targetTeam, clientProfile.getCareTeam());
+
+        verify(clientProfileRepository).findById(1L);
+        verify(careTeamRepository).findById(2L);
+        verify(securityContextService).getCurrentUserOrThrow();
+        verify(securityContextService, never()).assertCurrentEmployeeHasAccessToClientForWriteOrThrow(any());
+    }
+
+    @Test
+    void transferClientToTeam_shouldTransferWhenEmployeeHasWriteAccess() {
+        CareTeam currentTeam = new CareTeam("Team A", "0611111111", "a@test.local");
+        CareTeam targetTeam = new CareTeam("Team B", "0622222222", "b@test.local");
+
+        clientProfile.setCareTeam(currentTeam);
+
+        User employeeUser = new User();
+        Role employeeRole = new Role("EMPLOYEE");
+        employeeUser.setRole(employeeRole);
+
+        when(clientProfileRepository.findById(1L)).thenReturn(Optional.of(clientProfile));
+        when(careTeamRepository.findById(2L)).thenReturn(Optional.of(targetTeam));
+        when(securityContextService.getCurrentUserOrThrow()).thenReturn(employeeUser);
+        doNothing().when(securityContextService)
+            .assertCurrentEmployeeHasAccessToClientForWriteOrThrow(clientProfile);
+
+        ClientProfileResponse result = clientProfileService.transferClientToTeam(1L, 2L);
+
+        assertNotNull(result);
+        assertEquals(targetTeam, clientProfile.getCareTeam());
+
+        verify(securityContextService).assertCurrentEmployeeHasAccessToClientForWriteOrThrow(clientProfile);
+    }
+
+    @Test
+    void transferClientToTeam_shouldThrowWhenClientNotFound() {
+        when(clientProfileRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(
+            ResourceNotFoundException.class,
+            () -> clientProfileService.transferClientToTeam(99L, 2L)
+        );
+
+        verify(clientProfileRepository).findById(99L);
+        verify(careTeamRepository, never()).findById(any());
+    }
+
+    @Test
+    void transferClientToTeam_shouldThrowWhenTargetTeamNotFound() {
+        when(clientProfileRepository.findById(1L)).thenReturn(Optional.of(clientProfile));
+        when(careTeamRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(
+            ResourceNotFoundException.class,
+            () -> clientProfileService.transferClientToTeam(1L, 99L)
+        );
+
+        verify(clientProfileRepository).findById(1L);
+        verify(careTeamRepository).findById(99L);
     }
 }
