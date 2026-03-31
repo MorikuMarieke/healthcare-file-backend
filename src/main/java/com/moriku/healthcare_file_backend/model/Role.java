@@ -10,7 +10,7 @@ public class Role {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String name; // CLIENT / EMPLOYEE / ADMIN
+    private String name; // Roles are seeded in data.sql (CLIENT, EMPLOYEE, ADMIN)
 
     protected Role() {}
     public Role(String name) {

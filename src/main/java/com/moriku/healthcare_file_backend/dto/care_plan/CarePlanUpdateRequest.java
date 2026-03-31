@@ -1,7 +1,5 @@
 package com.moriku.healthcare_file_backend.dto.care_plan;
 
-import jakarta.validation.constraints.NotBlank;
-
 public class CarePlanUpdateRequest {
 
     private String notes;

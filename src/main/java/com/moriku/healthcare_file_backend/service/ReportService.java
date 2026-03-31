@@ -14,8 +14,6 @@ import com.moriku.healthcare_file_backend.repository.CarePlanRepository;
 import com.moriku.healthcare_file_backend.repository.ClientProfileRepository;
 import com.moriku.healthcare_file_backend.repository.ReportRepository;
 import com.moriku.healthcare_file_backend.security.SecurityContextService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,7 +29,6 @@ import java.util.stream.Collectors;
 @Service
 public class ReportService {
 
-    private static final Logger log = LoggerFactory.getLogger(ReportService.class);
     private final ReportRepository reportRepository;
     private final CarePlanRepository carePlanRepository;
     private final ClientProfileRepository clientProfileRepository;

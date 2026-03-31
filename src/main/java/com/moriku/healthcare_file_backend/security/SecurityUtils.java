@@ -18,7 +18,7 @@ public final class SecurityUtils {
         Object principal = authentication.getPrincipal();
 
         if (principal instanceof UserDetails userDetails) {
-            return userDetails.getUsername(); // email in your case
+            return userDetails.getUsername();
         }
 
         return authentication.getName();

@@ -28,11 +28,9 @@ public class Goal {
     @Column(columnDefinition = "text")
     private String instructions;
 
-    // audit on goals (container blijft simpel)
     @Column(name = "last_modified_at", nullable = false)
     private Instant lastModifiedAt;
 
-    // simpel & examen-proof: alleen id opslaan (nullable)
     @Column(name = "last_modified_by_employee_id")
     private Long lastModifiedByEmployeeId;
 

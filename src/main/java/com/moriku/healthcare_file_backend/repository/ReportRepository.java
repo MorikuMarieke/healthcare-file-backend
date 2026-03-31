@@ -5,8 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 public interface ReportRepository extends JpaRepository<Report, Long> {
 
@@ -14,5 +12,4 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
 
     Optional<Report> findByIdAndCarePlanId(Long reportId, Long carePlanId);
 
-    Page<Report> findAll(Pageable pageable);
 }

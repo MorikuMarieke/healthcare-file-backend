@@ -5,8 +5,6 @@ public class UserPasswordResetResponse {
     private Long userId;
     private String temporaryPassword;
 
-    public UserPasswordResetResponse() {}
-
     public UserPasswordResetResponse(Long userId, String temporaryPassword) {
         this.userId = userId;
         this.temporaryPassword = temporaryPassword;
