@@ -8,12 +8,16 @@ public final class EmployeeProfileMapper {
     private EmployeeProfileMapper() {}
 
     public static EmployeeProfileResponse toResponse(EmployeeProfile profile) {
+        Long careTeamId = profile.getCareTeam() != null ? profile.getCareTeam().getId() : null;
+
         return new EmployeeProfileResponse(
-            profile.getUser().getId(),
-            profile.getUser().getEmail(),
+            profile.getId(),
             profile.getWorkPhoneNumber(),
             profile.getPersonalPhoneNumber(),
-            profile.getPersonalEmail()
+            profile.getPersonalEmail(),
+            profile.getFirstName(),
+            profile.getLastName(),
+            careTeamId
         );
     }
 }
