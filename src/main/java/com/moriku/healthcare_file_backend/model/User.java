@@ -50,7 +50,6 @@ public class User {
         return id;
     }
 
-
     public String getEmail() {
         return email;
     }
@@ -75,9 +74,6 @@ public class User {
         this.role = role;
     }
 
-    // helpers
-
-    // if (user.isAdmin()) { ... }
     public boolean hasRole(String roleName) {
         return role != null && role.getName() != null && role.getName().equals(roleName);
     }
