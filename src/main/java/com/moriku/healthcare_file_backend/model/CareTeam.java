@@ -27,9 +27,7 @@ public class CareTeam {
     @Column(nullable = false, unique = true)
     private String teamEmail;
 
-    protected CareTeam() {
-        // for JPA
-    }
+    protected CareTeam() {}
 
     public CareTeam(String teamName, String teamPhoneNumber, String teamEmail) {
         this.teamName = teamName;

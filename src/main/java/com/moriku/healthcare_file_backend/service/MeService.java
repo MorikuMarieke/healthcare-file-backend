@@ -59,7 +59,6 @@ public class MeService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only EMPLOYEE/ADMIN can access /me/employee-profile");
         }
 
-        // If you used @MapsId, employeeProfile id == user id:
         EmployeeProfile profile = employeeProfileRepository.findById(user.getId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee profile not found"));
 
@@ -92,7 +91,6 @@ public class MeService {
         if (dto.getCurrentPassword().equals(dto.getNewPassword())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "New password must be different from old password");
         }
-
 
         user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
         user.setPasswordChangedAt(Instant.now());

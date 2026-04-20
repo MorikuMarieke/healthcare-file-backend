@@ -7,7 +7,7 @@ import jakarta.persistence.*;
 public class EmployeeProfile {
 
     @Id
-    private Long id; // same as user id
+    private Long id;
 
     @OneToOne
     @MapsId

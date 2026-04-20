@@ -62,7 +62,7 @@ public class JwtUtil {
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
 
         return Jwts.builder()
-            .setSubject(userDetails.getUsername()) // in your case: email
+            .setSubject(userDetails.getUsername()) // username = email
             .setIssuedAt(now)
             .setExpiration(expiryDate)
             .signWith(getSigningKey(), SignatureAlgorithm.HS256)

@@ -49,21 +49,6 @@ public class SecurityContextService {
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee profile not found"));
     }
 
-    public Long getCurrentEmployeeIdOrThrow() {
-        return getCurrentEmployeeProfileOrThrow().getId();
-    }
-
-    public ClientProfile getCurrentClientProfileOrThrow() {
-        User user = getCurrentUserOrThrow();
-
-        if (!user.isClient()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only CLIENT can perform this action");
-        }
-
-        return clientProfileRepository.findByUserIdAndActiveTrue(user.getId())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Client profile not found"));
-    }
-
     public void assertCurrentEmployeeHasAccessToClientForWriteOrThrow(ClientProfile clientProfile) {
         User currentUser = getCurrentUserOrThrow();
 
