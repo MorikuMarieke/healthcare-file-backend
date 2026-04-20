@@ -88,7 +88,7 @@ INSERT INTO care_teams (team_name, team_phone_number, team_email)
 SELECT
     'Seed Team 1',
     '0612345678',
-    'teamA@test.local'
+    'team1@test.local'
     WHERE NOT EXISTS (
     SELECT 1
     FROM care_teams ct
@@ -99,7 +99,7 @@ INSERT INTO care_teams (team_name, team_phone_number, team_email)
 SELECT
     'Seed Team 2',
     '0699999999',
-    'teamB@test.local'
+    'team2@test.local'
     WHERE NOT EXISTS (
     SELECT 1
     FROM care_teams ct

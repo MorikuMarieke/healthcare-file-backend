@@ -115,6 +115,4 @@ public class MeService {
         return profile;
     }
 
-    //TODO: /me endpoints voor alle onderdelen van het dossier zodra de architectuur staat /me/careplan me/careplan/goals me/careplan/reports (of hoe die endpoints dan heten)
-
 }
