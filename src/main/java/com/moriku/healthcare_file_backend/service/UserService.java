@@ -29,21 +29,15 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final InviteTokenRepository inviteTokenRepository;
-    private final EmployeeProfileRepository employeeProfileRepository;
-    private final ClientAssignmentRepository clientAssignmentRepository;
 
     public UserService(UserRepository userRepository,
                        RoleRepository roleRepository,
                        PasswordEncoder passwordEncoder,
-                       InviteTokenRepository inviteTokenRepository,
-                       EmployeeProfileRepository employeeProfileRepository,
-                       ClientAssignmentRepository clientAssignmentRepository) {
+                       InviteTokenRepository inviteTokenRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.inviteTokenRepository = inviteTokenRepository;
-        this.employeeProfileRepository = employeeProfileRepository;
-        this.clientAssignmentRepository = clientAssignmentRepository;
     }
 
     public List<UserResponse> getAllUsers() {
@@ -82,7 +76,7 @@ public class UserService {
 
         User user = UserMapper.toStaffEntity(dto, role);
 
-        // placeholder password: user cannot login until invite accept sets real password
+        // Temporary password until invite acceptance sets a real one
         user.setPassword(passwordEncoder.encode(java.util.UUID.randomUUID().toString()));
         user.setPasswordChangedAt(null);
 
@@ -106,7 +100,6 @@ public class UserService {
     }
 
     @Transactional
-    //TODO: Consider adding user.setPasswordChangedAt(null); with this method, but this also needs to be added to CustomUserDetailsService so null will be treated as expired. This could also be used in maybe creation of user, but I'll consider.
     public UserPasswordResetResponse resetPassword(Long id) {
         User user = userRepository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with id: " + id));
@@ -136,13 +129,7 @@ public class UserService {
         }
 
         inviteTokenRepository.deleteAllByUser_Id(userId);
-
-        employeeProfileRepository.findById(userId).ifPresent(employeeProfile ->
-            clientAssignmentRepository.deleteAllByEmployeeProfileId(employeeProfile.getId())
-        );
-
         userRepository.delete(user);
     }
-
 
 }

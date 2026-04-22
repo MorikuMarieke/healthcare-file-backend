@@ -12,9 +12,9 @@ public interface ReportPhotoService {
 
     List<ReportPhotoResponse> getAllPhotosForReport(Long reportId);
 
-    ReportPhoto getReportPhotoById(Long photoId);
+    ReportPhoto getReportPhotoById(Long reportId, Long photoId);
 
-    void deleteReportPhotoById(Long photoId);
+    void deleteReportPhotoById(Long reportId, Long photoId);
 
     List<ReportPhotoResponse> getMyPhotosForReport(Long reportId);
 

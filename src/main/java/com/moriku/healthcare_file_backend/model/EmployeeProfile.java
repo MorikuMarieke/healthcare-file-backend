@@ -7,7 +7,7 @@ import jakarta.persistence.*;
 public class EmployeeProfile {
 
     @Id
-    private Long id; // same as user id
+    private Long id;
 
     @OneToOne
     @MapsId
@@ -28,6 +28,10 @@ public class EmployeeProfile {
 
     @Column(nullable = false)
     private String lastName;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "care_team_id")
+    private CareTeam careTeam;
 
     public EmployeeProfile() {
     }
@@ -86,6 +90,14 @@ public class EmployeeProfile {
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
+    }
+
+    public CareTeam getCareTeam() {
+        return careTeam;
+    }
+
+    public void setCareTeam(CareTeam careTeam) {
+        this.careTeam = careTeam;
     }
 }
 

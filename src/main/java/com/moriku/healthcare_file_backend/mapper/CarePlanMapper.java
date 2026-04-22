@@ -12,7 +12,8 @@ public class CarePlanMapper {
         return new CarePlanResponse(
             carePlan.getId(),
             carePlan.getClientProfile().getId(),
-            carePlan.getNotes()
+            carePlan.getNotes(),
+            carePlan.getMedicalHistory()
         );
     }
 }

@@ -11,9 +11,6 @@ public class ReportPhotoResponse {
     private LocalDateTime uploadedAt;
     private Long reportId;
 
-    public ReportPhotoResponse() {
-    }
-
     public ReportPhotoResponse(Long id, String fileName, String contentType, Long fileSize, LocalDateTime uploadedAt, Long reportId) {
         this.id = id;
         this.fileName = fileName;

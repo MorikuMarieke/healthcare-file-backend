@@ -7,7 +7,6 @@ import com.moriku.healthcare_file_backend.model.EmployeeProfile;
 import com.moriku.healthcare_file_backend.model.Report;
 import com.moriku.healthcare_file_backend.model.ReportPhoto;
 import com.moriku.healthcare_file_backend.model.User;
-import com.moriku.healthcare_file_backend.repository.CareTeamMemberRepository;
 import com.moriku.healthcare_file_backend.repository.ReportPhotoRepository;
 import com.moriku.healthcare_file_backend.repository.ReportRepository;
 import com.moriku.healthcare_file_backend.security.SecurityContextService;
@@ -28,20 +27,17 @@ public class ReportPhotoServiceImpl implements ReportPhotoService {
 
     private final ReportPhotoRepository reportPhotoRepository;
     private final ReportRepository reportRepository;
-    private final CareTeamMemberRepository careTeamMemberRepository;
     private final SecurityContextService securityContextService;
     private final CarePlanService carePlanService;
 
     public ReportPhotoServiceImpl(
         ReportPhotoRepository reportPhotoRepository,
         ReportRepository reportRepository,
-        CareTeamMemberRepository careTeamMemberRepository,
         SecurityContextService securityContextService,
         CarePlanService carePlanService
     ) {
         this.reportPhotoRepository = reportPhotoRepository;
         this.reportRepository = reportRepository;
-        this.careTeamMemberRepository = careTeamMemberRepository;
         this.securityContextService = securityContextService;
         this.carePlanService = carePlanService;
     }
@@ -75,8 +71,8 @@ public class ReportPhotoServiceImpl implements ReportPhotoService {
     @Override
     @Transactional(readOnly = true)
     public List<ReportPhotoResponse> getAllPhotosForReport(Long reportId) {
-        getReportByIdOrThrow(reportId);
         validateStaffReadAccess();
+        getReportByIdOrThrow(reportId);
 
         List<ReportPhoto> reportPhotos = reportPhotoRepository.findAllByReportIdOrderByUploadedAtAsc(reportId);
         return ReportPhotoMapper.toResponseList(reportPhotos);
@@ -84,16 +80,19 @@ public class ReportPhotoServiceImpl implements ReportPhotoService {
 
     @Override
     @Transactional(readOnly = true)
-    public ReportPhoto getReportPhotoById(Long photoId) {
-        ReportPhoto reportPhoto = getReportPhotoByIdOrThrow(photoId);
+    public ReportPhoto getReportPhotoById(Long reportId, Long photoId) {
         validateStaffReadAccess();
-        return reportPhoto;
+
+        return reportPhotoRepository.findByIdAndReportId(photoId, reportId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Report photo not found."));
     }
 
     @Override
     @Transactional
-    public void deleteReportPhotoById(Long photoId) {
-        ReportPhoto reportPhoto = getReportPhotoByIdOrThrow(photoId);
+    public void deleteReportPhotoById(Long reportId, Long photoId) {
+        ReportPhoto reportPhoto = reportPhotoRepository.findByIdAndReportId(photoId, reportId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Report photo not found."));
+
         validateReportAuthorAccess(reportPhoto.getReport());
 
         reportPhotoRepository.delete(reportPhoto);
@@ -102,18 +101,16 @@ public class ReportPhotoServiceImpl implements ReportPhotoService {
     @Override
     @Transactional(readOnly = true)
     public List<ReportPhotoResponse> getMyPhotosForReport(Long reportId) {
-        Report report = getMyReportOrThrow(reportId);
-
-        List<ReportPhoto> reportPhotos = reportPhotoRepository.findAllByReportIdOrderByUploadedAtAsc(report.getId());
+        validateMyReportAccessOrThrow(reportId);
+        List<ReportPhoto> reportPhotos = reportPhotoRepository.findAllByReportIdOrderByUploadedAtAsc(reportId);
         return ReportPhotoMapper.toResponseList(reportPhotos);
     }
 
     @Override
     @Transactional(readOnly = true)
     public ReportPhoto getMyReportPhotoById(Long reportId, Long photoId) {
-        Report report = getMyReportOrThrow(reportId);
-
-        return reportPhotoRepository.findByIdAndReportId(photoId, report.getId())
+        validateMyReportAccessOrThrow(reportId);
+        return reportPhotoRepository.findByIdAndReportId(photoId, reportId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Report photo not found."));
     }
 
@@ -122,15 +119,10 @@ public class ReportPhotoServiceImpl implements ReportPhotoService {
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Report not found."));
     }
 
-    private ReportPhoto getReportPhotoByIdOrThrow(Long photoId) {
-        return reportPhotoRepository.findById(photoId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Report photo not found."));
-    }
-
-    private Report getMyReportOrThrow(Long reportId) {
+    private void validateMyReportAccessOrThrow(Long reportId) {
         CarePlan myCarePlan = carePlanService.getMyCarePlanEntityOrThrow();
 
-        return reportRepository.findByIdAndCarePlanId(reportId, myCarePlan.getId())
+        reportRepository.findByIdAndCarePlanId(reportId, myCarePlan.getId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Report not found."));
     }
 
@@ -171,13 +163,6 @@ public class ReportPhotoServiceImpl implements ReportPhotoService {
         );
     }
 
-    private void validateReportPhotoUploadAccess(Report report) {
-        EmployeeProfile currentEmployee = securityContextService.getCurrentEmployeeProfileOrThrow();
-
-        assertEmployeeHasAccessToReportClientOrThrow(currentEmployee, report);
-        validateReportAuthorAccess(report);
-    }
-
     private void validateReportAuthorAccess(Report report) {
         EmployeeProfile currentEmployee = securityContextService.getCurrentEmployeeProfileOrThrow();
 
@@ -189,13 +174,21 @@ public class ReportPhotoServiceImpl implements ReportPhotoService {
         }
     }
 
-    private void assertEmployeeHasAccessToReportClientOrThrow(EmployeeProfile employee, Report report) {
-        Long careTeamId = report.getCarePlan().getClientProfile().getCareTeam().getId();
+    private void validateReportPhotoUploadAccess(Report report) {
+        EmployeeProfile currentEmployee = securityContextService.getCurrentEmployeeProfileOrThrow();
 
-        boolean allowed = careTeamMemberRepository.existsByCareTeamIdAndEmployeeProfileId(careTeamId, employee.getId());
+        securityContextService.assertCurrentEmployeeHasAccessToClientForWriteOrThrow(
+            report.getCarePlan().getClientProfile()
+        );
+        assertCurrentEmployeeIsAuthorOrThrow(currentEmployee, report);
+    }
 
-        if (!allowed) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No access to this client.");
+    private void assertCurrentEmployeeIsAuthorOrThrow(EmployeeProfile employee, Report report) {
+        if (!report.getAuthor().getId().equals(employee.getId())) {
+            throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                "You are not the author of this report."
+            );
         }
     }
 }

@@ -2,7 +2,6 @@ package com.moriku.healthcare_file_backend.security;
 
 import com.moriku.healthcare_file_backend.model.User;
 import com.moriku.healthcare_file_backend.service.UserService;
-import org.jspecify.annotations.NonNull;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -23,8 +22,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     @Override
-    @NonNull
-    public UserDetails loadUserByUsername(@NonNull String email) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 
         User user = userService.getUserEntityByEmail(email);
 
@@ -44,7 +42,7 @@ public class CustomUserDetailsService implements UserDetailsService {
             }
         }
         SimpleGrantedAuthority authority =
-            new SimpleGrantedAuthority(user.getRole().getName()); // "ADMIN"
+            new SimpleGrantedAuthority(user.getRole().getName());
 
         List<SimpleGrantedAuthority> authorities =
             List.of(authority);

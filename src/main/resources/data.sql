@@ -24,7 +24,7 @@ SELECT 'ADMIN'
 -- ADMIN USER (password = Admin123!)
 INSERT INTO users (email, password, role_id, password_changed_at, created_at)
 SELECT
-    'admin@local.test',
+    'admin@test.local',
     '$2a$12$NQpmP1wgsmtzF90lMZU.GO.jjaURL4jEWf75q/MOyIXHMgqyfsGq6',
     r.id,
     NOW(),
@@ -82,17 +82,57 @@ WHERE r.name = 'CLIENT'
   AND NOT EXISTS (SELECT 1 FROM users u WHERE u.email = 'client@test.local');
 
 -- =========================
--- EMPLOYEE PROFILES (MapsId: id == user_id)
+-- CARE TEAMS
 -- =========================
-INSERT INTO employee_profiles (user_id, first_name, last_name, work_phone_number, personal_phone_number, personal_email)
+INSERT INTO care_teams (team_name, team_phone_number, team_email)
+SELECT
+    'Seed Team 1',
+    '0612345678',
+    'team1@test.local'
+    WHERE NOT EXISTS (
+    SELECT 1
+    FROM care_teams ct
+    WHERE ct.team_name = 'Seed Team 1'
+);
+
+INSERT INTO care_teams (team_name, team_phone_number, team_email)
+SELECT
+    'Seed Team 2',
+    '0699999999',
+    'team2@test.local'
+    WHERE NOT EXISTS (
+    SELECT 1
+    FROM care_teams ct
+    WHERE ct.team_name = 'Seed Team 2'
+);
+
+-- =========================
+-- EMPLOYEE PROFILES (MapsId: id == user_id)
+-- Employee profiles may exist without a care team.
+-- In this seed:
+-- - employee1 belongs to Seed Team 1
+-- - employee2 belongs to Seed Team 2
+-- - employee3 starts without a team for assignment testing
+-- =========================
+INSERT INTO employee_profiles (
+    user_id,
+    care_team_id,
+    first_name,
+    last_name,
+    work_phone_number,
+    personal_phone_number,
+    personal_email
+)
 SELECT
     u.id,
+    ct.id,
     'Test',
     'Employee',
     '0611111111',
     '0622222222',
     'employee.personal@test.local'
 FROM users u
+         JOIN care_teams ct ON ct.team_name = 'Seed Team 1'
 WHERE u.email = 'employee@test.local'
   AND NOT EXISTS (
     SELECT 1
@@ -100,15 +140,25 @@ WHERE u.email = 'employee@test.local'
     WHERE ep.user_id = u.id
 );
 
-INSERT INTO employee_profiles (user_id, first_name, last_name, work_phone_number, personal_phone_number, personal_email)
+INSERT INTO employee_profiles (
+    user_id,
+    care_team_id,
+    first_name,
+    last_name,
+    work_phone_number,
+    personal_phone_number,
+    personal_email
+)
 SELECT
     u.id,
+    ct.id,
     'Test2',
     'Employee',
     '0633333333',
     '0644444444',
     'employee2.personal@test.local'
 FROM users u
+         JOIN care_teams ct ON ct.team_name = 'Seed Team 2'
 WHERE u.email = 'employee2@test.local'
   AND NOT EXISTS (
     SELECT 1
@@ -116,9 +166,18 @@ WHERE u.email = 'employee2@test.local'
     WHERE ep.user_id = u.id
 );
 
-INSERT INTO employee_profiles (user_id, first_name, last_name, work_phone_number, personal_phone_number, personal_email)
+INSERT INTO employee_profiles (
+    user_id,
+    care_team_id,
+    first_name,
+    last_name,
+    work_phone_number,
+    personal_phone_number,
+    personal_email
+)
 SELECT
     u.id,
+    NULL,
     'Test3',
     'Employee',
     '0655555555',
@@ -133,59 +192,8 @@ WHERE u.email = 'employee3@test.local'
 );
 
 -- =========================
--- CARE TEAMS (seed)  (must exist before client_profiles due to NOT NULL care_team_id)
--- =========================
-INSERT INTO care_teams (team_name, team_phone_number, team_email)
-SELECT
-    'Seed Team A',
-    '0612345678',
-    'teamA@test.local'
-    WHERE NOT EXISTS (
-    SELECT 1
-    FROM care_teams ct
-    WHERE ct.team_name = 'Seed Team A'
-);
-
-INSERT INTO care_teams (team_name, team_phone_number, team_email)
-SELECT
-    'Seed Team B',
-    '0699999999',
-    'teamB@test.local'
-    WHERE NOT EXISTS (
-    SELECT 1
-    FROM care_teams ct
-    WHERE ct.team_name = 'Seed Team B'
-);
-
--- =========================
--- CARE TEAM MEMBERS (employees linked to teams)
--- =========================
--- employee1 -> Team A
-INSERT INTO care_team_members (care_team_id, employee_profile_id)
-SELECT
-    (SELECT ct.id FROM care_teams ct WHERE ct.team_name = 'Seed Team A'),
-    (SELECT ep.user_id FROM employee_profiles ep WHERE ep.personal_email = 'employee.personal@test.local')
-    WHERE NOT EXISTS (
-    SELECT 1
-    FROM care_team_members m
-    WHERE m.care_team_id = (SELECT ct.id FROM care_teams ct WHERE ct.team_name = 'Seed Team A')
-      AND m.employee_profile_id = (SELECT ep.user_id FROM employee_profiles ep WHERE ep.personal_email = 'employee.personal@test.local')
-);
-
--- employee2 -> Team B
-INSERT INTO care_team_members (care_team_id, employee_profile_id)
-SELECT
-    (SELECT ct.id FROM care_teams ct WHERE ct.team_name = 'Seed Team B'),
-    (SELECT ep.user_id FROM employee_profiles ep WHERE ep.personal_email = 'employee2.personal@test.local')
-    WHERE NOT EXISTS (
-    SELECT 1
-    FROM care_team_members m
-    WHERE m.care_team_id = (SELECT ct.id FROM care_teams ct WHERE ct.team_name = 'Seed Team B')
-      AND m.employee_profile_id = (SELECT ep.user_id FROM employee_profiles ep WHERE ep.personal_email = 'employee2.personal@test.local')
-);
-
--- =========================
--- CLIENT PROFILE (care_team_id is required)
+-- CLIENT PROFILE
+-- Clients always belong to exactly one care team.
 -- =========================
 INSERT INTO client_profiles (bsn, first_name, last_name, birth_date, sex, active, created_at, care_team_id)
 SELECT
@@ -196,8 +204,12 @@ SELECT
     'FEMALE',
     true,
     NOW(),
-    (SELECT ct.id FROM care_teams ct WHERE ct.team_name = 'Seed Team A')
-    WHERE NOT EXISTS (SELECT 1 FROM client_profiles cp WHERE cp.bsn = '123456789');
+    (SELECT ct.id FROM care_teams ct WHERE ct.team_name = 'Seed Team 1')
+    WHERE NOT EXISTS (
+    SELECT 1
+    FROM client_profiles cp
+    WHERE cp.bsn = '123456789'
+);
 
 -- CONTACT DETAILS
 INSERT INTO contact_details (email, client_profile_id)
@@ -219,12 +231,12 @@ WHERE bsn = '123456789'
   AND user_id IS NULL;
 
 -- =========================
--- CARE PLAN (seed for the seeded client)
--- notes NOT NULL
+-- CARE PLAN
 -- =========================
-INSERT INTO care_plans (client_profile_id, notes)
+INSERT INTO care_plans (client_profile_id, notes, medical_history)
 SELECT
     cp.id,
+    '',
     ''
 FROM client_profiles cp
 WHERE cp.bsn = '123456789'
@@ -235,10 +247,66 @@ WHERE cp.bsn = '123456789'
 );
 
 -- =========================
--- REPORTS (seed)
+-- GOALS
 -- =========================
--- NOTE: author_employee_id references employee_profiles.user_id (MapsId)
--- employee1 writes 2 reports for Team A client
+INSERT INTO goals (
+    care_plan_id,
+    date_created,
+    evaluation_date,
+    care_goal,
+    instructions,
+    last_modified_at,
+    last_modified_by_employee_id
+)
+SELECT
+    cpl.id,
+    CURRENT_DATE,
+    CURRENT_DATE + INTERVAL '30 days',
+    'Client werkt aan meer zelfstandigheid in dagelijkse routine.',
+    'Dagelijks structuurmoment bespreken en voortgang evalueren.',
+    NOW(),
+    (SELECT ep.user_id FROM employee_profiles ep WHERE ep.personal_email = 'employee.personal@test.local')
+FROM care_plans cpl
+    JOIN client_profiles cp ON cp.id = cpl.client_profile_id
+WHERE cp.bsn = '123456789'
+  AND NOT EXISTS (
+    SELECT 1
+    FROM goals g
+    WHERE g.care_plan_id = cpl.id
+  AND g.care_goal = 'Client werkt aan meer zelfstandigheid in dagelijkse routine.'
+    );
+
+INSERT INTO goals (
+    care_plan_id,
+    date_created,
+    evaluation_date,
+    care_goal,
+    instructions,
+    last_modified_at,
+    last_modified_by_employee_id
+)
+SELECT
+    cpl.id,
+    CURRENT_DATE,
+    CURRENT_DATE + INTERVAL '45 days',
+    'Client oefent met het uitbreiden van sociale participatie.',
+    'Wekelijks contactmoment plannen en ervaringen bespreken.',
+    NOW(),
+    (SELECT ep.user_id FROM employee_profiles ep WHERE ep.personal_email = 'employee.personal@test.local')
+FROM care_plans cpl
+    JOIN client_profiles cp ON cp.id = cpl.client_profile_id
+WHERE cp.bsn = '123456789'
+  AND NOT EXISTS (
+    SELECT 1
+    FROM goals g
+    WHERE g.care_plan_id = cpl.id
+  AND g.care_goal = 'Client oefent met het uitbreiden van sociale participatie.'
+    );
+
+-- =========================
+-- REPORTS
+-- employee1 writes reports for Team 1 client
+-- =========================
 INSERT INTO reports (title, text, created_at, updated_at, care_plan_id, author_employee_id)
 SELECT
     'Intake verslag',
@@ -272,24 +340,5 @@ WHERE cp.bsn = '123456789'
     SELECT 1
     FROM reports r
     WHERE r.title = 'Weekrapportage'
-      AND r.care_plan_id = cpl.id
-);
-
--- employee2 writes 1 report for Team A client (useful to test author-only update/delete)
-INSERT INTO reports (title, text, created_at, updated_at, care_plan_id, author_employee_id)
-SELECT
-    'Observatie',
-    'Korte observatie tijdens bezoek.',
-    NOW(),
-    NOW(),
-    cpl.id,
-    (SELECT ep.user_id FROM employee_profiles ep WHERE ep.personal_email = 'employee2.personal@test.local')
-FROM care_plans cpl
-         JOIN client_profiles cp ON cp.id = cpl.client_profile_id
-WHERE cp.bsn = '123456789'
-  AND NOT EXISTS (
-    SELECT 1
-    FROM reports r
-    WHERE r.title = 'Observatie'
       AND r.care_plan_id = cpl.id
 );

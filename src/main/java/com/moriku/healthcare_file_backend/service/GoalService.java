@@ -8,6 +8,7 @@ import com.moriku.healthcare_file_backend.model.CarePlan;
 import com.moriku.healthcare_file_backend.model.Goal;
 import com.moriku.healthcare_file_backend.repository.CarePlanRepository;
 import com.moriku.healthcare_file_backend.repository.GoalRepository;
+import com.moriku.healthcare_file_backend.security.SecurityContextService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,13 +25,16 @@ public class GoalService {
     private final GoalRepository goalRepository;
     private final CarePlanRepository carePlanRepository;
     private final MeService meService;
+    private final SecurityContextService securityContextService;
 
     public GoalService(GoalRepository goalRepository,
                        CarePlanRepository carePlanRepository,
-                       MeService meService) {
+                       MeService meService,
+                       SecurityContextService securityContextService) {
         this.goalRepository = goalRepository;
         this.carePlanRepository = carePlanRepository;
         this.meService = meService;
+        this.securityContextService = securityContextService;
     }
 
     @Transactional
@@ -39,6 +43,8 @@ public class GoalService {
         validateEvaluationDate(req.getEvaluationDate());
 
         CarePlan carePlan = getCarePlanByClientProfileId(clientProfileId);
+
+        securityContextService.assertCurrentEmployeeHasAccessToClientForWriteOrThrow(carePlan.getClientProfile());
 
         Goal goal = GoalMapper.toEntity(req);
         carePlan.addGoal(goal);
@@ -74,9 +80,11 @@ public class GoalService {
 
         validateEvaluationDate(req.getEvaluationDate());
 
-        Long carePlanId = getCarePlanIdByClientProfileId(clientProfileId);
+        CarePlan carePlan = getCarePlanByClientProfileId(clientProfileId);
 
-        Goal goal = goalRepository.findByIdAndCarePlanId(goalId, carePlanId)
+        securityContextService.assertCurrentEmployeeHasAccessToClientForWriteOrThrow(carePlan.getClientProfile());
+
+        Goal goal = goalRepository.findByIdAndCarePlanId(goalId, carePlan.getId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Goal not found"));
 
         GoalMapper.updateEntity(goal, req);
@@ -93,6 +101,8 @@ public class GoalService {
     public void delete(Long clientProfileId, Long goalId) {
 
         CarePlan carePlan = getCarePlanByClientProfileId(clientProfileId);
+
+        securityContextService.assertCurrentEmployeeHasAccessToClientForWriteOrThrow(carePlan.getClientProfile());
 
         Goal goal = goalRepository.findByIdAndCarePlanId(goalId, carePlan.getId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Goal not found"));

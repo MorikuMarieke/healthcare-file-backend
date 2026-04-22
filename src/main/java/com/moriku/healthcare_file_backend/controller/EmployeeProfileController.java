@@ -29,4 +29,12 @@ public class EmployeeProfileController {
         return employeeProfileService.patchEmployeeProfile(userId, request);
     }
 
+    @PatchMapping("/{userId}/care-team/{teamId}")
+    public EmployeeProfileResponse assignEmployeeToTeam(
+        @PathVariable Long userId,
+        @PathVariable Long teamId
+    ) {
+        return employeeProfileService.assignEmployeeToTeam(userId, teamId);
+    }
+
 }

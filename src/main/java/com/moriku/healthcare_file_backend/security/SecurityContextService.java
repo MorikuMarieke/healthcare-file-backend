@@ -1,5 +1,6 @@
 package com.moriku.healthcare_file_backend.security;
 
+import com.moriku.healthcare_file_backend.model.ClientProfile;
 import com.moriku.healthcare_file_backend.model.EmployeeProfile;
 import com.moriku.healthcare_file_backend.model.User;
 import com.moriku.healthcare_file_backend.repository.EmployeeProfileRepository;
@@ -14,8 +15,10 @@ public class SecurityContextService {
     private final UserRepository userRepository;
     private final EmployeeProfileRepository employeeProfileRepository;
 
-    public SecurityContextService(UserRepository userRepository,
-                                  EmployeeProfileRepository employeeProfileRepository) {
+    public SecurityContextService(
+        UserRepository userRepository,
+        EmployeeProfileRepository employeeProfileRepository
+    ) {
         this.userRepository = userRepository;
         this.employeeProfileRepository = employeeProfileRepository;
     }
@@ -38,12 +41,25 @@ public class SecurityContextService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only EMPLOYEE/ADMIN can perform this action");
         }
 
-        // bij jou: employeeProfile id == user id (MapsId)
         return employeeProfileRepository.findById(user.getId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee profile not found"));
     }
 
-    public Long getCurrentEmployeeIdOrThrow() {
-        return getCurrentEmployeeProfileOrThrow().getId();
+    public void assertCurrentEmployeeHasAccessToClientForWriteOrThrow(ClientProfile clientProfile) {
+        User currentUser = getCurrentUserOrThrow();
+
+        if (currentUser.isAdmin()) {
+            return;
+        }
+
+        EmployeeProfile employeeProfile = getCurrentEmployeeProfileOrThrow();
+
+        if (employeeProfile.getCareTeam() == null || clientProfile.getCareTeam() == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No access to this client");
+        }
+
+        if (!employeeProfile.getCareTeam().getId().equals(clientProfile.getCareTeam().getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No write access to this client");
+        }
     }
 }

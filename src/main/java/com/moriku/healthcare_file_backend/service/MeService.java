@@ -59,7 +59,6 @@ public class MeService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only EMPLOYEE/ADMIN can access /me/employee-profile");
         }
 
-        // If you used @MapsId, employeeProfile id == user id:
         EmployeeProfile profile = employeeProfileRepository.findById(user.getId())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee profile not found"));
 
@@ -93,7 +92,6 @@ public class MeService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "New password must be different from old password");
         }
 
-
         user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
         user.setPasswordChangedAt(Instant.now());
     }
@@ -114,7 +112,5 @@ public class MeService {
 
         return profile;
     }
-
-    //TODO: /me endpoints voor alle onderdelen van het dossier zodra de architectuur staat /me/careplan me/careplan/goals me/careplan/reports (of hoe die endpoints dan heten)
 
 }

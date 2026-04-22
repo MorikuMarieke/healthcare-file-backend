@@ -21,10 +21,6 @@ public class ReportPhotoController {
         this.reportPhotoService = reportPhotoService;
     }
 
-    // =====================================================
-    // STAFF
-    // =====================================================
-
     @PostMapping("/{reportId}/photos")
     public ReportPhotoResponse uploadPhoto(
         @PathVariable Long reportId,
@@ -45,7 +41,7 @@ public class ReportPhotoController {
         @PathVariable Long reportId,
         @PathVariable Long photoId
     ) {
-        ReportPhoto photo = reportPhotoService.getReportPhotoById(photoId);
+        ReportPhoto photo = reportPhotoService.getReportPhotoById(reportId, photoId);
 
         return ResponseEntity.ok()
             .contentType(MediaType.parseMediaType(photo.getContentType()))
@@ -58,6 +54,6 @@ public class ReportPhotoController {
         @PathVariable Long reportId,
         @PathVariable Long photoId
     ) {
-        reportPhotoService.deleteReportPhotoById(photoId);
+        reportPhotoService.deleteReportPhotoById(reportId, photoId);
     }
 }

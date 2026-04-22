@@ -15,7 +15,6 @@ public final class UserMapper {
     private UserMapper() {
     }
 
-    // -------- Registration (CLIENT) --------
     public static User toEntity(UserRegistrationRequest dto, Role role, String encodedPassword) {
         User user = new User();
         user.setEmail(dto.getEmail().trim().toLowerCase());
@@ -25,7 +24,6 @@ public final class UserMapper {
         return user;
     }
 
-    // -------- Staff create (ADMIN creates EMPLOYEE / ADMIN) --------
     public static User toStaffEntity(UserCreateRequest dto, Role role) {
         User user = new User();
         user.setEmail(dto.getEmail().trim().toLowerCase());
@@ -33,7 +31,6 @@ public final class UserMapper {
         return user;
     }
 
-    // -------- Employee profile --------
     public static EmployeeProfile toEmployeeProfile(UserCreateRequest dto) {
         EmployeeProfile profile = new EmployeeProfile();
         profile.setFirstName(dto.getFirstName());
@@ -52,7 +49,6 @@ public final class UserMapper {
         return profile;
     }
 
-    // -------- Generic user response --------
     public static UserResponse toResponse(User user) {
         return new UserResponse(
             user.getId(),
@@ -62,7 +58,6 @@ public final class UserMapper {
         );
     }
 
-    // -------- Invite response (POST /users) --------
     public static UserInviteResponse toInviteResponse(
         User user,
         String inviteToken,

@@ -5,11 +5,13 @@ public class CarePlanResponse {
     private Long id;
     private Long clientProfileId;
     private String notes;
+    private String medicalHistory;
 
-    public CarePlanResponse(Long id, Long clientProfileId, String notes) {
+    public CarePlanResponse(Long id, Long clientProfileId, String notes, String medicalHistory) {
         this.id = id;
         this.clientProfileId = clientProfileId;
         this.notes = notes;
+        this.medicalHistory = medicalHistory;
     }
 
     public Long getId() {
@@ -22,5 +24,9 @@ public class CarePlanResponse {
 
     public String getNotes() {
         return notes;
+    }
+
+    public String getMedicalHistory() {
+        return medicalHistory;
     }
 }

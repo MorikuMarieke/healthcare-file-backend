@@ -37,7 +37,7 @@ public class UserController {
         return userService.createUser(dto);
     }
 
-    @DeleteMapping("/{id}") //TODO: Maybe change to soft delete eventually
+    @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteUser(@PathVariable Long id) {
         userService.deleteEmployeeUser(id);
