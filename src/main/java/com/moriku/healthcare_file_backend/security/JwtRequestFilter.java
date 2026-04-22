@@ -35,13 +35,11 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
-        // No token: proceed as anonymous (SecurityConfig decides)
         if (authHeader == null || authHeader.isBlank()) {
             chain.doFilter(request, response);
             return;
         }
 
-        // Token present but not Bearer: treat as invalid auth attempt
         if (!authHeader.startsWith("Bearer ")) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");

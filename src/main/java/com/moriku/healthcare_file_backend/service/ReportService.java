@@ -46,10 +46,6 @@ public class ReportService {
         this.securityContextService = securityContextService;
     }
 
-    // =====================================================
-    // STAFF
-    // =====================================================
-
     @Transactional
     public ReportResponse create(ReportCreateRequest request) {
         EmployeeProfile author = securityContextService.getCurrentEmployeeProfileOrThrow();
@@ -134,10 +130,6 @@ public class ReportService {
         );
     }
 
-    // =====================================================
-    // /me (CLIENT read-only)
-    // =====================================================
-
     public List<ReportResponse> getMyReports() {
         CarePlan myCarePlan = getMyCarePlan();
         return getByCarePlan(myCarePlan.getId());
@@ -151,10 +143,6 @@ public class ReportService {
 
         return ReportMapper.toResponse(report);
     }
-
-    // =====================================================
-    // helpers
-    // =====================================================
 
     private void assertCurrentEmployeeIsAuthorOrThrow(EmployeeProfile employee, Report report) {
         if (!report.getAuthor().getId().equals(employee.getId())) {

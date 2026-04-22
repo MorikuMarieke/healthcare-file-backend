@@ -24,7 +24,7 @@ SELECT 'ADMIN'
 -- ADMIN USER (password = Admin123!)
 INSERT INTO users (email, password, role_id, password_changed_at, created_at)
 SELECT
-    'admin@local.test',
+    'admin@test.local',
     '$2a$12$NQpmP1wgsmtzF90lMZU.GO.jjaURL4jEWf75q/MOyIXHMgqyfsGq6',
     r.id,
     NOW(),

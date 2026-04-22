@@ -76,7 +76,7 @@ public class UserService {
 
         User user = UserMapper.toStaffEntity(dto, role);
 
-        // placeholder password: user cannot login until invite accept sets real password
+        // Temporary password until invite acceptance sets a real one
         user.setPassword(passwordEncoder.encode(java.util.UUID.randomUUID().toString()));
         user.setPasswordChangedAt(null);
 
@@ -100,7 +100,6 @@ public class UserService {
     }
 
     @Transactional
-    //TODO: Consider adding user.setPasswordChangedAt(null); with this method, but this also needs to be added to CustomUserDetailsService so null will be treated as expired. This could also be used in maybe creation of user, but I'll consider.
     public UserPasswordResetResponse resetPassword(Long id) {
         User user = userRepository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with id: " + id));

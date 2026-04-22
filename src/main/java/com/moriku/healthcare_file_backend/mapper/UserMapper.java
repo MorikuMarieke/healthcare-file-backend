@@ -49,7 +49,6 @@ public final class UserMapper {
         return profile;
     }
 
-    // -------- Generic user response --------
     public static UserResponse toResponse(User user) {
         return new UserResponse(
             user.getId(),
@@ -59,7 +58,6 @@ public final class UserMapper {
         );
     }
 
-    // -------- Invite response (POST /users) --------
     public static UserInviteResponse toInviteResponse(
         User user,
         String inviteToken,
