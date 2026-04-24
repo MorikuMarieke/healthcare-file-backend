@@ -25,6 +25,8 @@ public class JwtUtil {
     ) {
         this.secret = secret;
         this.jwtExpirationMs = jwtExpirationMs;
+
+        System.out.println("JWT secret length = " + secret.length());
     }
 
     private Key getSigningKey() {
